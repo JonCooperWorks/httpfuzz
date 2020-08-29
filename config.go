@@ -7,8 +7,9 @@ import (
 
 // Config holds all fuzzer configuration.
 type Config struct {
-	TargetHeaderWordlists map[string]*os.File
-	URLPathWordlist       *os.File
+	TargetHeaders         []string
+	FuzzURL               bool
+	Wordlist              *os.File
 	Seed                  *http.Request
 	Client                *http.Client
 	MaxConcurrentRequests int

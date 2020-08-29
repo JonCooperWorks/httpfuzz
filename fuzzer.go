@@ -11,7 +11,7 @@ type Fuzzer struct {
 }
 
 // GenerateRequests begins generating HTTP requests based on the seed request and sends them into the returned channel.
-// It streams all files from the filesystem line-by-line so it can handle wordlists in constant time.
+// It streams the wordlist from the filesystem line-by-line so it can handle wordlists in constant time.
 // The trade-off is that callers cannot know ahead of time how many requests will be sent.
 func (f *Fuzzer) GenerateRequests() chan<- *http.Request {
 	requestQueue := make(chan *http.Request)
@@ -23,7 +23,7 @@ func (f *Fuzzer) GenerateRequests() chan<- *http.Request {
 }
 
 // RequestCount calculates the total number of requests that will be sent given a set of input and the fields to be fuzzed using combinatorials.
-// This will be slower the larger the input files.
+// This will be slower the larger the input file.
 func (f *Fuzzer) RequestCount() (int, error) {
 	return 0, nil
 }
