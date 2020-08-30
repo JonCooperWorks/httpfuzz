@@ -89,6 +89,7 @@ func (f *Fuzzer) requestWorker(request *Request) {
 		resp, err := response.CloneBody()
 		if err != nil {
 			log.Printf("Error cloning response for plugin %s: %v", plugin.Name(), err)
+			continue
 		}
 
 		// Run each plugin in its own goroutine
