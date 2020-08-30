@@ -60,16 +60,6 @@ func (r *Response) CloneBody() (*Response, error) {
 		newResponse.Trailer = r.Response.Trailer.Clone()
 	}
 
-	body, err := ioutil.ReadAll(r.Response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	// Put back the original body
-	r.Response.Body = ioutil.NopCloser(bytes.NewReader(body))
-
-	// Clone the request body
-	newResponse.Body = ioutil.NopCloser(bytes.NewReader(body))
 	newResponse.ContentLength = r.Response.ContentLength
 	newResponse.Uncompressed = r.Response.Uncompressed
 	newResponse.Request = r.Response.Request
@@ -81,5 +71,20 @@ func (r *Response) CloneBody() (*Response, error) {
 	newResponse.ProtoMinor = r.Response.ProtoMinor
 	newResponse.Close = r.Response.Close
 	copy(newResponse.TransferEncoding, r.Response.TransferEncoding)
+
+	if r.Response.Body == nil {
+		return &Response{Response: newResponse}, nil
+	}
+
+	body, err := ioutil.ReadAll(r.Response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Put back the original body
+	r.Response.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+	// Clone the request body
+	newResponse.Body = ioutil.NopCloser(bytes.NewReader(body))
 	return &Response{Response: newResponse}, nil
 }
