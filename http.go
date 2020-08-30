@@ -32,7 +32,7 @@ func (r *Request) CloneBody(ctx context.Context) (*Request, error) {
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		return nil, err
+		return req, err
 	}
 
 	// Put back the original body
@@ -78,7 +78,7 @@ func (r *Response) CloneBody() (*Response, error) {
 
 	body, err := ioutil.ReadAll(r.Response.Body)
 	if err != nil {
-		return nil, err
+		return &Response{Response: newResponse}, err
 	}
 
 	// Put back the original body
