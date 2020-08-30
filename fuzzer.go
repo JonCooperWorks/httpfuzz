@@ -1,7 +1,8 @@
 package httpfuzz
 
 import (
-	"net/http"
+	"bufio"
+	"context"
 )
 
 // Fuzzer creates HTTP requests from a seed request using the combination of inputs specified in the config.
@@ -13,11 +14,26 @@ type Fuzzer struct {
 // GenerateRequests begins generating HTTP requests based on the seed request and sends them into the returned channel.
 // It streams the wordlist from the filesystem line-by-line so it can handle wordlists in constant time.
 // The trade-off is that callers cannot know ahead of time how many requests will be sent.
-func (f *Fuzzer) GenerateRequests() chan<- *http.Request {
-	requestQueue := make(chan *http.Request)
+func (f *Fuzzer) GenerateRequests() <-chan *Request {
+	requestQueue := make(chan *Request)
 
-	// TODO: Generate requests based on the combinations of the headers and URL paths.
-	// TODO: Push generated requests into the queue as they are created
+	go func() {
+		// Generate requests based on the combinations of the headers and URL paths.
+		scanner := bufio.NewScanner(f.Wordlist)
+		for scanner.Scan() {
+			word := scanner.Text()
+
+			// Send requests with each of the headers in the request.
+			for _, header := range f.TargetHeaders {
+				req := f.Seed.CloneBody(context.Background())
+				req.Header.Set(header, word)
+
+				// Push generated requests into the queue as they are created
+				requestQueue <- req
+			}
+
+		}
+	}()
 
 	return requestQueue
 }
@@ -29,7 +45,7 @@ func (f *Fuzzer) RequestCount() (int, error) {
 }
 
 // ProcessRequests executes HTTP requests in the background as they're received over the channel.
-func (f *Fuzzer) ProcessRequests(requestQueue <-chan *http.Request) {
+func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Request) {
 	for req := range requestQueue {
 		if req == nil {
 			// A nil request signals that this is the last request.
@@ -46,16 +62,17 @@ func (f *Fuzzer) ProcessRequests(requestQueue <-chan *http.Request) {
 	}
 }
 
-func (f *Fuzzer) requestWorker(req *http.Request) {
-	resp, err := f.Client.Do(req)
+func (f *Fuzzer) requestWorker(request *Request) {
+	// Keep the request body around for the plugins.
+	response, err := f.Client.Do(request.CloneBody(context.Background()))
 	if err != nil {
 		for _, plugin := range f.Plugins {
-			plugin.OnError(req, err)
+			go plugin.OnError(request.CloneBody(context.Background()), err)
 		}
 		return
 	}
 
 	for _, plugin := range f.Plugins {
-		plugin.OnSuccess(req, resp)
+		go plugin.OnSuccess(request.CloneBody(context.Background()), response)
 	}
 }
