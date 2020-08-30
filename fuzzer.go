@@ -127,6 +127,13 @@ func (f *Fuzzer) requestWorker(request *Request) {
 		}
 
 		// Run each plugin in its own goroutine
-		go plugin.OnSuccess(r, resp)
+		go f.runPlugin(plugin, r, resp)
+	}
+}
+
+func (f *Fuzzer) runPlugin(plugin Plugin, req *Request, resp *Response) {
+	err := plugin.OnSuccess(req, resp)
+	if err != nil {
+		f.Logger.Printf("Error running plugin %s: %v", plugin.Name(), err)
 	}
 }
