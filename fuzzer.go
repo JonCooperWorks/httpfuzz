@@ -88,17 +88,15 @@ func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Request) {
 			break
 		}
 
-		// Handle each request in the background and move to the next one.
-		if f.MaxConcurrentRequests == 0 {
-			go f.requestWorker(req)
-			continue
-		}
-
-		// TODO: Use a goroutine pool if the user set the max # of concurrent requests
+		// TODO: Use a goroutine pool to run request workers in the background and control concurrency
+		go f.requestWorker(req)
 	}
+
+	f.WaitGroup.Wait()
 }
 
 func (f *Fuzzer) requestWorker(request *Request) {
+	defer f.WaitGroup.Done()
 	// Keep the request body around for the plugins.
 	req, err := request.CloneBody(context.Background())
 	if err != nil {
@@ -106,10 +104,14 @@ func (f *Fuzzer) requestWorker(request *Request) {
 		return
 	}
 
+	request.URL.Scheme = f.URLScheme
 	response, err := f.Client.Do(request)
 	if err != nil {
+		f.Logger.Printf("Error sending request: %v", err)
 		return
 	}
+
+	f.Logger.Printf("Received: [%v]", response.StatusCode)
 
 	for _, plugin := range f.Plugins {
 		r, err := req.CloneBody(context.Background())

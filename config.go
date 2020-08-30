@@ -3,6 +3,7 @@ package httpfuzz
 import (
 	"log"
 	"os"
+	"sync"
 )
 
 // Config holds all fuzzer configuration.
@@ -14,4 +15,6 @@ type Config struct {
 	MaxConcurrentRequests int64
 	Plugins               []Plugin
 	Logger                *log.Logger
+	URLScheme             string
+	WaitGroup             sync.WaitGroup
 }

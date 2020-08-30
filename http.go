@@ -26,6 +26,12 @@ type Request struct {
 // CloneBody makes a copy of a request, including its body, while leaving the original body intact.
 func (r *Request) CloneBody(ctx context.Context) (*Request, error) {
 	req := &Request{Request: r.Request.Clone(ctx)}
+
+	// We have to manually set the host in the URL.
+	req.URL.Host = r.Request.Host
+
+	// Prevent an error when sending the request
+	req.RequestURI = ""
 	if req.Body == nil {
 		return req, nil
 	}
