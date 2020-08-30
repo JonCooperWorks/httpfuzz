@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -42,11 +41,6 @@ func actionHTTPFuzz(c *cli.Context) error {
 	}
 
 	logger.Printf("Sending %d requests", requestCount)
-
-	_, err = wordlist.Seek(0, io.SeekStart)
-	if err != nil {
-		return err
-	}
 
 	if !c.Bool("count-only") {
 		config.WaitGroup.Add(requestCount)
