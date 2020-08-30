@@ -1,6 +1,7 @@
 package httpfuzz
 
 import (
+	"log"
 	"os"
 )
 
@@ -12,4 +13,5 @@ type Config struct {
 	Client                *Client
 	MaxConcurrentRequests int
 	Plugins               []Plugin
+	Logger                log.Logger
 }

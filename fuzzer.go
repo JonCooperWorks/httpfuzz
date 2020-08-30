@@ -3,7 +3,6 @@ package httpfuzz
 import (
 	"bufio"
 	"context"
-	"log"
 )
 
 // Fuzzer creates HTTP requests from a seed request using the combination of inputs specified in the config.
@@ -70,7 +69,7 @@ func (f *Fuzzer) requestWorker(request *Request) {
 	// Keep the request body around for the plugins.
 	req, err := request.CloneBody(context.Background())
 	if err != nil {
-		log.Printf("Error cloning request body: %v", err)
+		f.Logger.Printf("Error cloning request body: %v", err)
 		return
 	}
 
@@ -82,13 +81,13 @@ func (f *Fuzzer) requestWorker(request *Request) {
 	for _, plugin := range f.Plugins {
 		r, err := req.CloneBody(context.Background())
 		if err != nil {
-			log.Printf("Error cloning request for plugin %s: %v", plugin.Name(), err)
+			f.Logger.Printf("Error cloning request for plugin %s: %v", plugin.Name(), err)
 			continue
 		}
 
 		resp, err := response.CloneBody()
 		if err != nil {
-			log.Printf("Error cloning response for plugin %s: %v", plugin.Name(), err)
+			f.Logger.Printf("Error cloning response for plugin %s: %v", plugin.Name(), err)
 			continue
 		}
 
