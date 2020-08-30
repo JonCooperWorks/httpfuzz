@@ -24,20 +24,23 @@ type Request struct {
 }
 
 // CloneBody makes a copy of a request, including its body, while leaving the original body intact.
-func (r *Request) CloneBody(ctx context.Context) *Request {
+func (r *Request) CloneBody(ctx context.Context) (*Request, error) {
 	req := &Request{Request: r.Request.Clone(ctx)}
 	if req.Body == nil {
-		return req
+		return req, nil
 	}
 
-	body, _ := ioutil.ReadAll(req.Body)
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	// Put back the original body
 	r.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
 
 	// Clone the request body
 	req.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
-	return req
+	return req, nil
 }
 
 // Response is a *http.Response that allows cloning its body.

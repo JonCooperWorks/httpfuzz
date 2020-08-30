@@ -3,6 +3,7 @@ package httpfuzz
 import (
 	"bufio"
 	"context"
+	"log"
 )
 
 // Fuzzer creates HTTP requests from a seed request using the combination of inputs specified in the config.
@@ -17,7 +18,7 @@ type Fuzzer struct {
 func (f *Fuzzer) GenerateRequests() <-chan *Request {
 	requestQueue := make(chan *Request)
 
-	go func() {
+	go func(requestQueue chan *Request) {
 		// Generate requests based on the combinations of the headers and URL paths.
 		scanner := bufio.NewScanner(f.Wordlist)
 		for scanner.Scan() {
@@ -25,15 +26,18 @@ func (f *Fuzzer) GenerateRequests() <-chan *Request {
 
 			// Send requests with each of the headers in the request.
 			for _, header := range f.TargetHeaders {
-				req := f.Seed.CloneBody(context.Background())
+				req, err := f.Seed.CloneBody(context.Background())
+				if err != nil {
+					continue
+				}
+
 				req.Header.Set(header, word)
 
 				// Push generated requests into the queue as they are created
 				requestQueue <- req
 			}
-
 		}
-	}()
+	}(requestQueue)
 
 	return requestQueue
 }
@@ -64,15 +68,24 @@ func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Request) {
 
 func (f *Fuzzer) requestWorker(request *Request) {
 	// Keep the request body around for the plugins.
-	response, err := f.Client.Do(request.CloneBody(context.Background()))
+	req, err := request.CloneBody(context.Background())
 	if err != nil {
-		for _, plugin := range f.Plugins {
-			go plugin.OnError(request.CloneBody(context.Background()), err)
-		}
+		log.Printf("Error cloning request body: %v", err)
+		return
+	}
+
+	response, err := f.Client.Do(request)
+	if err != nil {
 		return
 	}
 
 	for _, plugin := range f.Plugins {
-		go plugin.OnSuccess(request.CloneBody(context.Background()), response)
+		req, err = req.CloneBody(context.Background())
+		if err != nil {
+			log.Printf("Error cloning request for plugin %v: %v", plugin.Name(), err)
+			continue
+		}
+
+		go plugin.OnSuccess(req, response)
 	}
 }
