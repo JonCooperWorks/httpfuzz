@@ -38,6 +38,10 @@ func (f *Fuzzer) GenerateRequests() <-chan *Request {
 				requestQueue <- req
 			}
 		}
+
+		// Signal to consumer that we're done
+		requestQueue <- nil
+
 	}(requestQueue)
 
 	return requestQueue

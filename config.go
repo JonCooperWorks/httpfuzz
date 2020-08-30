@@ -11,7 +11,7 @@ type Config struct {
 	Wordlist              *os.File
 	Seed                  *Request
 	Client                *Client
-	MaxConcurrentRequests int
+	MaxConcurrentRequests int64
 	Plugins               []Plugin
-	Logger                log.Logger
+	Logger                *log.Logger
 }
