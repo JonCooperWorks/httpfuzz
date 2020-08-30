@@ -34,6 +34,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Request {
 
 				req.Header.Set(header, word)
 
+				// TODO: Send payload and header down chan too
 				// Push generated requests into the queue as they are created
 				requestQueue <- req
 			}
