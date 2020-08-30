@@ -51,7 +51,14 @@ type Response struct {
 // CloneBody makes a copy of a response, including its body, while leaving the original body intact.
 func (r *Response) CloneBody() (*Response, error) {
 	newResponse := new(http.Response)
-	newResponse.Header = r.Response.Header.Clone()
+
+	if r.Response.Header != nil {
+		newResponse.Header = r.Response.Header.Clone()
+	}
+
+	if r.Response.Trailer != nil {
+		newResponse.Trailer = r.Response.Trailer.Clone()
+	}
 
 	body, err := ioutil.ReadAll(r.Response.Body)
 	if err != nil {
@@ -63,7 +70,6 @@ func (r *Response) CloneBody() (*Response, error) {
 
 	// Clone the request body
 	newResponse.Body = ioutil.NopCloser(bytes.NewReader(body))
-	newResponse.Trailer = r.Response.Trailer.Clone()
 	newResponse.ContentLength = r.Response.ContentLength
 	newResponse.Uncompressed = r.Response.Uncompressed
 	newResponse.Request = r.Response.Request
