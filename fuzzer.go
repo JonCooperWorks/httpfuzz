@@ -2,7 +2,9 @@ package httpfuzz
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"io"
 )
 
 // Fuzzer creates HTTP requests from a seed request using the combination of inputs specified in the config.
@@ -44,7 +46,34 @@ func (f *Fuzzer) GenerateRequests() <-chan *Request {
 // RequestCount calculates the total number of requests that will be sent given a set of input and the fields to be fuzzed using combinatorials.
 // This will be slower the larger the input file.
 func (f *Fuzzer) RequestCount() (int, error) {
-	return 0, nil
+	var count int
+	const lineBreak = '\n'
+
+	buf := make([]byte, bufio.MaxScanTokenSize)
+
+	for {
+		bufferSize, err := f.Wordlist.Read(buf)
+		if err != nil && err != io.EOF {
+			return 0, err
+		}
+
+		var buffPosition int
+		for {
+			i := bytes.IndexByte(buf[buffPosition:], lineBreak)
+			if i == -1 || bufferSize == buffPosition {
+				break
+			}
+			buffPosition += i + 1
+			count++
+		}
+		if err == io.EOF {
+			break
+		}
+	}
+
+	// # of requests = # of lines per file * number of targets
+	count = count * len(f.TargetHeaders)
+	return count, nil
 }
 
 // ProcessRequests executes HTTP requests in the background as they're received over the channel.
