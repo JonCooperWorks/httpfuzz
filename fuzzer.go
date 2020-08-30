@@ -82,10 +82,16 @@ func (f *Fuzzer) requestWorker(request *Request) {
 	for _, plugin := range f.Plugins {
 		req, err = req.CloneBody(context.Background())
 		if err != nil {
-			log.Printf("Error cloning request for plugin %v: %v", plugin.Name(), err)
+			log.Printf("Error cloning request for plugin %s: %v", plugin.Name(), err)
 			continue
 		}
 
-		go plugin.OnSuccess(req, response)
+		resp, err := response.CloneBody()
+		if err != nil {
+			log.Printf("Error cloning response for plugin %s: %v", plugin.Name(), err)
+		}
+
+		// Run each plugin in its own goroutine
+		go plugin.OnSuccess(req, resp)
 	}
 }

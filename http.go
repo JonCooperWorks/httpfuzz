@@ -47,3 +47,33 @@ func (r *Request) CloneBody(ctx context.Context) (*Request, error) {
 type Response struct {
 	*http.Response
 }
+
+// CloneBody makes a copy of a response, including its body, while leaving the original body intact.
+func (r *Response) CloneBody() (*Response, error) {
+	newResponse := new(http.Response)
+	newResponse.Header = r.Response.Header.Clone()
+
+	body, err := ioutil.ReadAll(r.Response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Put back the original body
+	r.Response.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+	// Clone the request body
+	newResponse.Body = ioutil.NopCloser(bytes.NewReader(body))
+	newResponse.Trailer = r.Response.Trailer.Clone()
+	newResponse.ContentLength = r.Response.ContentLength
+	newResponse.Uncompressed = r.Response.Uncompressed
+	newResponse.Request = r.Response.Request
+	newResponse.TLS = r.Response.TLS
+	newResponse.Status = r.Response.Status
+	newResponse.StatusCode = r.Response.StatusCode
+	newResponse.Proto = r.Response.Proto
+	newResponse.ProtoMajor = r.Response.ProtoMajor
+	newResponse.ProtoMinor = r.Response.ProtoMinor
+	newResponse.Close = r.Response.Close
+	copy(newResponse.TransferEncoding, r.Response.TransferEncoding)
+	return &Response{Response: newResponse}, nil
+}
