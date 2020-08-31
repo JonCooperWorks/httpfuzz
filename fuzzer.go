@@ -78,7 +78,7 @@ func (f *Fuzzer) RequestCount() (int, error) {
 	}
 
 	// # of requests = # of lines per file * number of targets
-	count = count * len(f.TargetHeaders)
+	count = (count + 1) * len(f.TargetHeaders)
 
 	// Move back to the head of the file
 	_, err := f.Wordlist.Seek(0, io.SeekStart)
