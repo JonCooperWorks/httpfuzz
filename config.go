@@ -16,5 +16,5 @@ type Config struct {
 	Plugins               []Plugin
 	Logger                *log.Logger
 	URLScheme             string
-	WaitGroup             sync.WaitGroup
+	waitGroup             sync.WaitGroup
 }

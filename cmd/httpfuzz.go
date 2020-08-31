@@ -43,7 +43,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 	logger.Printf("Sending %d requests", requestCount)
 
 	if !c.Bool("count-only") {
-		config.WaitGroup.Add(requestCount)
+		fuzzer.WaitFor(requestCount)
 		requests := fuzzer.GenerateRequests()
 		fuzzer.ProcessRequests(requests)
 		logger.Printf("Finished.")

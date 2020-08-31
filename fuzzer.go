@@ -88,7 +88,7 @@ func (f *Fuzzer) RequestCount() (int, error) {
 	return count, nil
 }
 
-// ProcessRequests executes HTTP requests in the background as they're received over the channel.
+// ProcessRequests executes HTTP requests in as they're received over the channel.
 func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Request) {
 	for req := range requestQueue {
 		if req == nil {
@@ -100,11 +100,11 @@ func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Request) {
 		go f.requestWorker(req)
 	}
 
-	f.WaitGroup.Wait()
+	f.waitGroup.Wait()
 }
 
 func (f *Fuzzer) requestWorker(request *Request) {
-	defer f.WaitGroup.Done()
+	defer f.waitGroup.Done()
 	// Keep the request body around for the plugins.
 	req, err := request.CloneBody(context.Background())
 	if err != nil {
@@ -137,6 +137,12 @@ func (f *Fuzzer) requestWorker(request *Request) {
 		// Run each plugin in its own goroutine
 		go f.runPlugin(plugin, r, resp)
 	}
+}
+
+// WaitFor adds the requests the fuzzer will send to our internal sync.WaitGroup.
+// This keeps the fuzzer running until all requests have been completed.
+func (f *Fuzzer) WaitFor(requests int) {
+	f.waitGroup.Add(requests)
 }
 
 func (f *Fuzzer) runPlugin(plugin Plugin, req *Request, resp *Response) {
