@@ -23,7 +23,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 	}
 
 	httpClient := &http.Client{}
-	logger := log.New(os.Stdout, "httpfuzz", log.Llongfile)
+	logger := log.New(os.Stdout, "httpfuzz: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	config := &httpfuzz.Config{
 		TargetHeaders: c.StringSlice("target-header"),
