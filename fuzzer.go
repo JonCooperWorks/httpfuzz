@@ -159,7 +159,14 @@ func (f *Fuzzer) requestWorker(job *Job) {
 		}
 
 		// Run each plugin in its own goroutine
-		go f.runPlugin(plugin, r, resp)
+		result := &Result{
+			Request:   r,
+			Response:  resp,
+			Payload:   job.Payload,
+			Location:  job.Location,
+			FieldName: job.FieldName,
+		}
+		go f.runPlugin(plugin, result)
 	}
 }
 
@@ -169,8 +176,8 @@ func (f *Fuzzer) WaitFor(requests int) {
 	f.waitGroup.Add(requests)
 }
 
-func (f *Fuzzer) runPlugin(plugin Plugin, req *Request, resp *Response) {
-	err := plugin.OnSuccess(req, resp)
+func (f *Fuzzer) runPlugin(plugin Plugin, result *Result) {
+	err := plugin.OnSuccess(result)
 	if err != nil {
 		f.Logger.Printf("Error running plugin %s: %v", plugin.Name(), err)
 	}
