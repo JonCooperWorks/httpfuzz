@@ -93,7 +93,7 @@ func (f *Fuzzer) RequestCount() (int, error) {
 func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Request) {
 	for req := range requestQueue {
 		if req == nil {
-			// A nil request signals that this is the last request.
+			// A nil request signals that the producer is finished.
 			break
 		}
 
