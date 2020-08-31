@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/joncooperworks/httpfuzz"
 	"github.com/urfave/cli/v2"
@@ -25,13 +26,13 @@ func actionHTTPFuzz(c *cli.Context) error {
 	logger := log.New(os.Stdout, "httpfuzz", log.Llongfile)
 
 	config := &httpfuzz.Config{
-		TargetHeaders:         c.StringSlice("target-header"),
-		Wordlist:              wordlist,
-		Client:                &httpfuzz.Client{Client: httpClient},
-		Seed:                  &httpfuzz.Request{Request: request},
-		MaxConcurrentRequests: c.Int64("max-concurrent-requests"),
-		Logger:                logger,
-		URLScheme:             c.String("url-scheme"),
+		TargetHeaders: c.StringSlice("target-header"),
+		Wordlist:      wordlist,
+		Client:        &httpfuzz.Client{Client: httpClient},
+		Seed:          &httpfuzz.Request{Request: request},
+		Logger:        logger,
+		RequestDelay:  time.Duration(c.Int("delay-ms")) * time.Millisecond,
+		URLScheme:     c.String("url-scheme"),
 	}
 
 	fuzzer := &httpfuzz.Fuzzer{Config: config}
@@ -67,10 +68,10 @@ func main() {
 				Required: true,
 				Usage:    "the request to be fuzzed",
 			},
-			&cli.Int64Flag{
-				Name:     "max-concurrent-requests",
+			&cli.IntFlag{
+				Name:     "delay-ms",
 				Required: false,
-				Usage:    "the number of requests to run at once",
+				Usage:    "the delay between each HTTP request in milliseconds",
 			},
 			&cli.StringFlag{
 				Name:     "plugins-dir",

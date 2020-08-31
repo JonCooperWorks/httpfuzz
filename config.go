@@ -4,17 +4,18 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 )
 
 // Config holds all fuzzer configuration.
 type Config struct {
-	TargetHeaders         []string
-	Wordlist              *os.File
-	Seed                  *Request
-	Client                *Client
-	MaxConcurrentRequests int64
-	Plugins               []Plugin
-	Logger                *log.Logger
-	URLScheme             string
-	waitGroup             sync.WaitGroup
+	TargetHeaders []string
+	Wordlist      *os.File
+	Seed          *Request
+	Client        *Client
+	RequestDelay  time.Duration
+	Plugins       []Plugin
+	Logger        *log.Logger
+	URLScheme     string
+	waitGroup     sync.WaitGroup
 }

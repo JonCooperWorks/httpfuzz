@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"time"
 )
 
 // Fuzzer creates HTTP requests from a seed request using the combination of inputs specified in the config.
@@ -96,8 +97,10 @@ func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Request) {
 			break
 		}
 
-		// TODO: Use a goroutine pool to run request workers in the background and control concurrency
 		go f.requestWorker(req)
+
+		// If there's no delay, it'll return immediately, so we don't need to waste time checking.
+		time.Sleep(f.RequestDelay)
 	}
 
 	f.waitGroup.Wait()
