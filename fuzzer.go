@@ -8,6 +8,20 @@ import (
 	"time"
 )
 
+const (
+	headerLocation   = "header"
+	bodyLocation     = "body"
+	urlParamLocation = "urlParam"
+)
+
+// Job represents a request to send with a payload from the fuzzer.
+type Job struct {
+	Request   *Request
+	FieldName string
+	Location  string
+	Payload   string
+}
+
 // Fuzzer creates HTTP requests from a seed request using the combination of inputs specified in the config.
 // It uses the producer-consumer pattern efficiently handle large inputs.
 type Fuzzer struct {
@@ -17,14 +31,14 @@ type Fuzzer struct {
 // GenerateRequests begins generating HTTP requests based on the seed request and sends them into the returned channel.
 // It streams the wordlist from the filesystem line-by-line so it can handle wordlists in constant time.
 // The trade-off is that callers cannot know ahead of time how many requests will be sent.
-func (f *Fuzzer) GenerateRequests() <-chan *Request {
-	requestQueue := make(chan *Request)
+func (f *Fuzzer) GenerateRequests() <-chan *Job {
+	requestQueue := make(chan *Job)
 
-	go func(requestQueue chan *Request) {
+	go func(requestQueue chan *Job) {
 		// Generate requests based on the combinations of the headers and URL paths.
 		scanner := bufio.NewScanner(f.Wordlist)
 		for scanner.Scan() {
-			word := scanner.Text()
+			payload := scanner.Text()
 
 			// Send requests with each of the headers in the request.
 			for _, header := range f.TargetHeaders {
@@ -33,11 +47,16 @@ func (f *Fuzzer) GenerateRequests() <-chan *Request {
 					continue
 				}
 
-				req.Header.Set(header, word)
+				req.Header.Set(header, payload)
 
 				// TODO: Send payload and header down chan too
 				// Push generated requests into the queue as they are created
-				requestQueue <- req
+				requestQueue <- &Job{
+					Request:   req,
+					FieldName: header,
+					Location:  headerLocation,
+					Payload:   payload,
+				}
 			}
 		}
 
@@ -90,14 +109,14 @@ func (f *Fuzzer) RequestCount() (int, error) {
 }
 
 // ProcessRequests executes HTTP requests in as they're received over the channel.
-func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Request) {
-	for req := range requestQueue {
-		if req == nil {
-			// A nil request signals that the producer is finished.
+func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Job) {
+	for job := range requestQueue {
+		if job == nil {
+			// A nil job signals that the producer is finished.
 			break
 		}
 
-		go f.requestWorker(req)
+		go f.requestWorker(job)
 
 		// If there's no delay, it'll return immediately, so we don't need to waste time checking.
 		time.Sleep(f.RequestDelay)
@@ -106,23 +125,25 @@ func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Request) {
 	f.waitGroup.Wait()
 }
 
-func (f *Fuzzer) requestWorker(request *Request) {
+func (f *Fuzzer) requestWorker(job *Job) {
 	defer f.waitGroup.Done()
+
+	job.Request.URL.Scheme = f.URLScheme
+
 	// Keep the request body around for the plugins.
-	req, err := request.CloneBody(context.Background())
+	req, err := job.Request.CloneBody(context.Background())
 	if err != nil {
 		f.Logger.Printf("Error cloning request body: %v", err)
 		return
 	}
 
-	request.URL.Scheme = f.URLScheme
-	response, err := f.Client.Do(request)
+	response, err := f.Client.Do(job.Request)
 	if err != nil {
 		f.Logger.Printf("Error sending request: %v", err)
 		return
 	}
 
-	f.Logger.Printf("Received: [%v]", response.StatusCode)
+	f.Logger.Printf("Payload in %s: %s. Received: [%v]", job.Location, job.Payload, response.StatusCode)
 
 	for _, plugin := range f.Plugins {
 		r, err := req.CloneBody(context.Background())
