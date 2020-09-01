@@ -12,6 +12,7 @@ func RequestFromFile(filename string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	reader := bufio.NewReader(file)
 	return http.ReadRequest(reader)
