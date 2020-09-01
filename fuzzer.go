@@ -9,10 +9,11 @@ import (
 )
 
 const (
-	headerLocation     = "header"
-	bodyLocation       = "body"
-	urlParamLocation   = "url param"
-	urlPathArgLocation = "url path argument"
+	headerLocation        = "header"
+	bodyLocation          = "body"
+	urlParamLocation      = "url param"
+	urlPathArgLocation    = "url path argument"
+	directoryRootLocation = "url directory root"
 )
 
 // Job represents a request to send with a payload from the fuzzer.
@@ -93,6 +94,21 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 			}
 
+			if f.FuzzDirectory {
+				req, err := f.Seed.CloneBody(context.Background())
+				if err != nil {
+					f.Logger.Printf("Error cloning request for directory root %v", err)
+					continue
+				}
+				req.SetDirectoryRoot(payload)
+				requestQueue <- &Job{
+					Request:  req,
+					Location: directoryRootLocation,
+					Payload:  payload,
+				}
+
+			}
+
 			// TODO: fuzz request body injection points
 		}
 
@@ -133,15 +149,18 @@ func (f *Fuzzer) RequestCount() (int, error) {
 	}
 
 	// # of requests = # of lines per file * number of targets
-	count = (count * len(f.TargetHeaders)) + (count * len(f.TargetParams)) + (count * len(f.TargetPathArgs))
+	numRequests := (count * len(f.TargetHeaders)) + (count * len(f.TargetParams)) + (count * len(f.TargetPathArgs))
+	if f.FuzzDirectory {
+		numRequests = numRequests + count
+	}
 
 	// Move back to the head of the file
 	_, err := f.Wordlist.Seek(0, io.SeekStart)
 	if err != nil {
-		return count, err
+		return numRequests, err
 	}
 
-	return count, nil
+	return numRequests, nil
 }
 
 // ProcessRequests executes HTTP requests in as they're received over the channel.

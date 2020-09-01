@@ -108,3 +108,15 @@ func TestSetURLPathArgument(t *testing.T) {
 		t.Fatalf("Expected %s, got %s", expectedURL, actualURL)
 	}
 }
+
+func TestSetDirectoryRoot(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("body"))
+	request := &Request{req}
+	request.SetDirectoryRoot("added")
+
+	expectedURL := "/test/path/added?param=test"
+	actualURL := request.URL.String()
+	if actualURL != expectedURL {
+		t.Fatalf("Expected %s, got %s", expectedURL, actualURL)
+	}
+}

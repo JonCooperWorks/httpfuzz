@@ -87,6 +87,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 	config := &httpfuzz.Config{
 		TargetHeaders:  c.StringSlice("target-header"),
 		TargetParams:   c.StringSlice("target-param"),
+		FuzzDirectory:  c.Bool("dirbuster"),
 		TargetPathArgs: targetPathArgs,
 		Wordlist:       wordlist,
 		Client:         &httpfuzz.Client{Client: httpClient},
@@ -176,6 +177,11 @@ func main() {
 			&cli.StringSliceFlag{
 				Name:  "target-path-arg",
 				Usage: "URL path argument to fuzz",
+			},
+			&cli.BoolFlag{
+				Name:     "dirbuster",
+				Required: false,
+				Usage:    "brute force directory names from wordlist",
 			},
 		},
 	}

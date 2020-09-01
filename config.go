@@ -12,6 +12,7 @@ type Config struct {
 	TargetHeaders  []string
 	TargetParams   []string
 	TargetPathArgs []string
+	FuzzDirectory  bool
 	Wordlist       *os.File
 	Seed           *Request
 	Client         *Client

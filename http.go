@@ -82,6 +82,13 @@ func (r *Request) SetURLPathArgument(arg, value string) {
 	r.Request.URL.Path = strings.Join(path, "/")
 }
 
+// SetDirectoryRoot inserts a string after the final "/" in a URL to
+func (r *Request) SetDirectoryRoot(value string) {
+	path := strings.Split(r.URL.EscapedPath(), "/")
+	path = append(path, value)
+	r.Request.URL.Path = strings.Join(path, "/")
+}
+
 // Response is a *http.Response that allows cloning its body.
 type Response struct {
 	*http.Response
