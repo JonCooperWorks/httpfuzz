@@ -27,6 +27,14 @@ func actionHTTPFuzz(c *cli.Context) error {
 		return err
 	}
 
+	seedRequest := &httpfuzz.Request{Request: request}
+	targetPathArgs := c.StringSlice("target-path-arg")
+	for _, arg := range targetPathArgs {
+		if !seedRequest.HasPathArgument(arg) {
+			return fmt.Errorf("seed request does not have URL path arg '%s'", arg)
+		}
+	}
+
 	rootCAs, _ := x509.SystemCertPool()
 	if rootCAs == nil {
 		rootCAs = x509.NewCertPool()
@@ -74,14 +82,6 @@ func actionHTTPFuzz(c *cli.Context) error {
 		urlScheme = "https"
 	} else {
 		urlScheme = "http"
-	}
-
-	seedRequest := &httpfuzz.Request{Request: request}
-	targetPathArgs := c.StringSlice("target-path-arg")
-	for _, arg := range targetPathArgs {
-		if !seedRequest.HasPathArgument(arg) {
-			return fmt.Errorf("seed request does not have URL path arg '%s'", arg)
-		}
 	}
 
 	config := &httpfuzz.Config{
