@@ -84,3 +84,27 @@ func TestHasPathArgument(t *testing.T) {
 		t.Fatalf("Expected HasPathArgument to be false")
 	}
 }
+
+func TestSetQueryParam(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/test/path", strings.NewReader("body"))
+	request := &Request{req}
+	request.SetQueryParam("param", "test")
+
+	expectedURL := "/test/path?param=test"
+	actualURL := request.URL.String()
+	if actualURL != expectedURL {
+		t.Fatalf("Expected %s, got %s", expectedURL, actualURL)
+	}
+}
+
+func TestSetURLPathArgument(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("body"))
+	request := &Request{req}
+	request.SetURLPathArgument("path", "test")
+
+	expectedURL := "/test/test?param=test"
+	actualURL := request.URL.String()
+	if actualURL != expectedURL {
+		t.Fatalf("Expected %s, got %s", expectedURL, actualURL)
+	}
+}
