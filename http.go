@@ -19,7 +19,8 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	return &Response{Response: resp}, err
 }
 
-// Request is a *http.Request that allows cloning its body.
+// Request is a more fuzzable *http.Request.
+// It supports deep-cloning its body and has several convenience methods for modifying request attributes.
 type Request struct {
 	*http.Request
 }
@@ -60,6 +61,25 @@ func (r *Request) HasPathArgument(pathArg string) bool {
 	}
 
 	return false
+}
+
+// SetQueryParam sets a URL query param to a given value.
+func (r *Request) SetQueryParam(param, value string) {
+	q := r.URL.Query()
+	q.Set(param, value)
+	r.Request.URL.RawQuery = q.Encode()
+}
+
+// SetURLPathArgument sets a URL path argument to a given value.
+func (r *Request) SetURLPathArgument(arg, value string) {
+	path := strings.Split(r.URL.EscapedPath(), "/")
+	for index, item := range path {
+		if arg == item {
+			path[index] = value
+		}
+	}
+
+	r.Request.URL.Path = strings.Join(path, "/")
 }
 
 // Response is a *http.Response that allows cloning its body.

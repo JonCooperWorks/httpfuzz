@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"strings"
 	"time"
 )
 
@@ -25,7 +24,7 @@ type Job struct {
 }
 
 // Fuzzer creates HTTP requests from a seed request using the combination of inputs specified in the config.
-// It uses the producer-consumer pattern efficiently handle large inputs.
+// It uses the producer-consumer pattern efficiently handle large wordlists.
 type Fuzzer struct {
 	*Config
 }
@@ -68,10 +67,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 					continue
 				}
 
-				q := req.URL.Query()
-				q.Set(param, payload)
-				req.URL.RawQuery = q.Encode()
-
+				req.SetQueryParam(param, payload)
 				requestQueue <- &Job{
 					Request:   req,
 					FieldName: param,
@@ -88,15 +84,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 					continue
 				}
 
-				path := strings.Split(req.URL.EscapedPath(), "/")
-				for index, item := range path {
-					if arg == item {
-						path[index] = payload
-					}
-				}
-
-				req.URL.Path = strings.Join(path, "/")
-
+				req.SetURLPathArgument(arg, payload)
 				requestQueue <- &Job{
 					Request:   req,
 					FieldName: arg,
