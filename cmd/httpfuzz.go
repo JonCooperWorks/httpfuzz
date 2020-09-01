@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"log"
 	"net/http"
 	"os"
@@ -23,6 +24,12 @@ func actionHTTPFuzz(c *cli.Context) error {
 	}
 
 	httpClient := &http.Client{}
+	transport := &http.Transport{}
+	if c.Bool("skip-cert-verify") {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	httpClient.Transport = transport
 	logger := log.New(os.Stdout, "httpfuzz: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	config := &httpfuzz.Config{
@@ -93,6 +100,12 @@ func main() {
 				Required: false,
 				Value:    "http",
 				Usage:    "URL scheme for requests. http or https",
+			},
+			&cli.BoolFlag{
+				Name:     "skip-cert-verify",
+				Required: false,
+				Value:    false,
+				Usage:    "skip verifying SSL certificate when making requests",
 			},
 		},
 	}
