@@ -33,7 +33,7 @@ func TestRequestClonePreservesOriginalBody(t *testing.T) {
 		t.Fatalf("RequestURI was not removed before clone")
 	}
 
-	if request.URL.Host != clonedRequest.Host {
+	if request.Host != clonedRequest.URL.Host {
 		t.Fatalf("Host was not copied into URL")
 	}
 }
