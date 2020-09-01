@@ -27,13 +27,14 @@ func TestFuzzerCalculatesCorrectNumberOfRequests(t *testing.T) {
 	}
 	request, _ := http.NewRequest("GET", "", nil)
 	config := &Config{
-		TargetHeaders: []string{"Host", "Pragma", "User-Agent"},
-		TargetParams:  []string{"fuzz"},
-		Wordlist:      wordlist,
-		Seed:          &Request{request},
-		Client:        &Client{&http.Client{}},
-		Logger:        testLogger(t),
-		URLScheme:     "http",
+		TargetHeaders:  []string{"Host", "Pragma", "User-Agent"},
+		TargetParams:   []string{"fuzz"},
+		TargetPathArgs: []string{"user"},
+		Wordlist:       wordlist,
+		Seed:           &Request{request},
+		Client:         &Client{&http.Client{}},
+		Logger:         testLogger(t),
+		URLScheme:      "http",
 	}
 	fuzzer := &Fuzzer{config}
 	count, err := fuzzer.RequestCount()
@@ -41,7 +42,7 @@ func TestFuzzerCalculatesCorrectNumberOfRequests(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	const expectedCount = 20
+	const expectedCount = 25
 	if count != expectedCount {
 		t.Fatalf("Exepected %d requests, got %d", expectedCount, count)
 	}
@@ -54,13 +55,14 @@ func TestFuzzerGeneratesExpectedNumberOfRequests(t *testing.T) {
 	}
 	request, _ := http.NewRequest("GET", "", nil)
 	config := &Config{
-		TargetHeaders: []string{"Host", "Pragma", "User-Agent"},
-		TargetParams:  []string{"fuzz"},
-		Wordlist:      wordlist,
-		Seed:          &Request{request},
-		Client:        &Client{&http.Client{}},
-		Logger:        testLogger(t),
-		URLScheme:     "http",
+		TargetHeaders:  []string{"Host", "Pragma", "User-Agent"},
+		TargetParams:   []string{"fuzz"},
+		TargetPathArgs: []string{"user"},
+		Wordlist:       wordlist,
+		Seed:           &Request{request},
+		Client:         &Client{&http.Client{}},
+		Logger:         testLogger(t),
+		URLScheme:      "http",
 	}
 	fuzzer := &Fuzzer{config}
 	expectedCount, err := fuzzer.RequestCount()

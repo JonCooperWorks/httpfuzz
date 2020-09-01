@@ -77,14 +77,15 @@ func actionHTTPFuzz(c *cli.Context) error {
 	}
 
 	config := &httpfuzz.Config{
-		TargetHeaders: c.StringSlice("target-header"),
-		TargetParams:  c.StringSlice("target-param"),
-		Wordlist:      wordlist,
-		Client:        &httpfuzz.Client{Client: httpClient},
-		Seed:          &httpfuzz.Request{Request: request},
-		Logger:        logger,
-		RequestDelay:  time.Duration(c.Int("delay-ms")) * time.Millisecond,
-		URLScheme:     urlScheme,
+		TargetHeaders:  c.StringSlice("target-header"),
+		TargetParams:   c.StringSlice("target-param"),
+		TargetPathArgs: c.StringSlice("target-path-arg"),
+		Wordlist:       wordlist,
+		Client:         &httpfuzz.Client{Client: httpClient},
+		Seed:           &httpfuzz.Request{Request: request},
+		Logger:         logger,
+		RequestDelay:   time.Duration(c.Int("delay-ms")) * time.Millisecond,
+		URLScheme:      urlScheme,
 	}
 
 	fuzzer := &httpfuzz.Fuzzer{Config: config}
@@ -163,6 +164,10 @@ func main() {
 			&cli.StringSliceFlag{
 				Name:  "target-param",
 				Usage: "URL Query string param to fuzz",
+			},
+			&cli.StringSliceFlag{
+				Name:  "target-path-arg",
+				Usage: "URL path argument to fuzz",
 			},
 		},
 	}

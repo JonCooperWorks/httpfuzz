@@ -5,13 +5,15 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"strings"
 	"time"
 )
 
 const (
-	headerLocation   = "header"
-	bodyLocation     = "body"
-	urlParamLocation = "urlParam"
+	headerLocation     = "header"
+	bodyLocation       = "body"
+	urlParamLocation   = "urlParam"
+	urlPathArgLocation = "urlPathArg"
 )
 
 // Job represents a request to send with a payload from the fuzzer.
@@ -78,7 +80,31 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 			}
 
-			// TODO: fuzz URL path args
+			// Fuzz URL path args
+			for _, arg := range f.TargetPathArgs {
+				req, err := f.Seed.CloneBody(context.Background())
+				if err != nil {
+					f.Logger.Printf("Error cloning request for param %s: %v", arg, err)
+					continue
+				}
+
+				path := strings.Split(req.URL.EscapedPath(), "/")
+				for index, item := range path {
+					if arg == item {
+						path[index] = payload
+					}
+				}
+
+				req.URL.Path = strings.Join(path, "/")
+
+				requestQueue <- &Job{
+					Request:   req,
+					FieldName: arg,
+					Location:  urlPathArgLocation,
+					Payload:   payload,
+				}
+			}
+
 			// TODO: fuzz request body injection points
 		}
 
@@ -119,7 +145,7 @@ func (f *Fuzzer) RequestCount() (int, error) {
 	}
 
 	// # of requests = # of lines per file * number of targets
-	count = (count * len(f.TargetHeaders)) + (count * len(f.TargetParams))
+	count = (count * len(f.TargetHeaders)) + (count * len(f.TargetParams)) + (count * len(f.TargetPathArgs))
 
 	// Move back to the head of the file
 	_, err := f.Wordlist.Seek(0, io.SeekStart)
