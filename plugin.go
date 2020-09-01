@@ -1,10 +1,18 @@
 package httpfuzz
 
+import "log"
+
 // Plugin must be implemented by a plugin to users to hook the request - response transaction.
 type Plugin interface {
-	Initialize(args map[string]string) error
+	Initialize(environment *Environment) error
 	OnSuccess(result *Result) error
 	Name() string
+}
+
+// Environment contains everything a Plugin needs to configure itself.
+type Environment struct {
+	Arguments map[string]string
+	Logger    *log.Logger
 }
 
 // Result is the request, response and associated metadata to be processed by plugins.
