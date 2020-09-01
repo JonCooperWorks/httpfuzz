@@ -49,7 +49,6 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 
 				req.Header.Set(header, payload)
 
-				// TODO: Send payload and header down chan too
 				// Push generated requests into the queue as they are created
 				requestQueue <- &Job{
 					Request:   req,
