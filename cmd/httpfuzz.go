@@ -135,10 +135,10 @@ func main() {
 				Required: false,
 				Usage:    "the delay between each HTTP request in milliseconds",
 			},
-			&cli.StringFlag{
-				Name:     "plugins-dir",
+			&cli.StringSliceFlag{
+				Name:     "plugin",
 				Required: false,
-				Usage:    "directory for plugin binaries",
+				Usage:    "httpfuzz plugin binary",
 			},
 			&cli.StringFlag{
 				Name:     "wordlist",
