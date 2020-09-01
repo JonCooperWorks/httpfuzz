@@ -76,13 +76,21 @@ func actionHTTPFuzz(c *cli.Context) error {
 		urlScheme = "http"
 	}
 
+	seedRequest := &httpfuzz.Request{Request: request}
+	targetPathArgs := c.StringSlice("target-path-arg")
+	for _, arg := range targetPathArgs {
+		if !seedRequest.HasPathArgument(arg) {
+			return fmt.Errorf("seed request does not have URL path arg '%s'", arg)
+		}
+	}
+
 	config := &httpfuzz.Config{
 		TargetHeaders:  c.StringSlice("target-header"),
 		TargetParams:   c.StringSlice("target-param"),
-		TargetPathArgs: c.StringSlice("target-path-arg"),
+		TargetPathArgs: targetPathArgs,
 		Wordlist:       wordlist,
 		Client:         &httpfuzz.Client{Client: httpClient},
-		Seed:           &httpfuzz.Request{Request: request},
+		Seed:           seedRequest,
 		Logger:         logger,
 		RequestDelay:   time.Duration(c.Int("delay-ms")) * time.Millisecond,
 		URLScheme:      urlScheme,

@@ -5,6 +5,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // Client is a modified net/http Client that can natively handle our request and response types
@@ -47,6 +48,18 @@ func (r *Request) CloneBody(ctx context.Context) (*Request, error) {
 	// Clone the request body
 	req.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
 	return req, nil
+}
+
+// HasPathArgument returns true if a request URL has a given path argument.
+func (r *Request) HasPathArgument(pathArg string) bool {
+	path := strings.Split(r.URL.EscapedPath(), "/")
+	for _, arg := range path {
+		if arg == pathArg {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Response is a *http.Response that allows cloning its body.

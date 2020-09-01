@@ -72,3 +72,15 @@ func TestResponseClonePreservesOriginalBody(t *testing.T) {
 		t.Fatalf("Cloned response status does not match original response status")
 	}
 }
+
+func TestHasPathArgument(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/test/path", strings.NewReader("body"))
+	request := &Request{req}
+	if !request.HasPathArgument("path") {
+		t.Fatal("Expected HasPathArgument to be true")
+	}
+
+	if request.HasPathArgument("notfound") {
+		t.Fatalf("Expected HasPathArgument to be false")
+	}
+}
