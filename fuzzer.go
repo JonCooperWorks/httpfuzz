@@ -94,19 +94,20 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 			}
 
+			// Fuzz for directory and file names like dirbuster.
 			if f.FuzzDirectory {
 				req, err := f.Seed.CloneBody(context.Background())
 				if err != nil {
 					f.Logger.Printf("Error cloning request for directory root %v", err)
 					continue
 				}
+
 				req.SetDirectoryRoot(payload)
 				requestQueue <- &Job{
 					Request:  req,
 					Location: directoryRootLocation,
 					Payload:  payload,
 				}
-
 			}
 
 			// TODO: fuzz request body injection points
