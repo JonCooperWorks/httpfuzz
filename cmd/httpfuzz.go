@@ -2,6 +2,9 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -24,8 +27,32 @@ func actionHTTPFuzz(c *cli.Context) error {
 		return err
 	}
 
+	rootCAs, _ := x509.SystemCertPool()
+	if rootCAs == nil {
+		rootCAs = x509.NewCertPool()
+	}
+	if proxyCACertFilename := c.String("proxy-ca-pem"); proxyCACertFilename != "" {
+		proxyCACertFile, err := os.Open(proxyCACertFilename)
+		if err != nil {
+			return err
+		}
+		defer proxyCACertFile.Close()
+
+		certs, err := ioutil.ReadAll(proxyCACertFile)
+		if err != nil {
+			return err
+		}
+
+		if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
+			return fmt.Errorf("failed to trust custom CA certs from %s", proxyCACertFilename)
+		}
+	}
+
 	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: c.Bool("skip-cert-verify")},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: c.Bool("skip-cert-verify"),
+			RootCAs:            rootCAs,
+		},
 	}
 
 	if proxyURL := c.String("proxy-url"); proxyURL != "" {
@@ -126,6 +153,11 @@ func main() {
 				Name:     "proxy-url",
 				Required: false,
 				Usage:    "HTTP proxy to send requests through",
+			},
+			&cli.StringFlag{
+				Name:     "proxy-ca-pem",
+				Required: false,
+				Usage:    "PEM encoded CA Certificate for TLS requests through a proxy",
 			},
 		},
 	}
