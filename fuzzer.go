@@ -76,8 +76,8 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 					Location:  urlParamLocation,
 					Payload:   payload,
 				}
-
 			}
+
 			// TODO: fuzz URL path args
 			// TODO: fuzz request body injection points
 		}
