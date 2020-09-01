@@ -28,6 +28,7 @@ func TestFuzzerCalculatesCorrectNumberOfRequests(t *testing.T) {
 	request, _ := http.NewRequest("GET", "", nil)
 	config := &Config{
 		TargetHeaders: []string{"Host", "Pragma", "User-Agent"},
+		TargetParams:  []string{"fuzz"},
 		Wordlist:      wordlist,
 		Seed:          &Request{request},
 		Client:        &Client{&http.Client{}},
@@ -40,7 +41,7 @@ func TestFuzzerCalculatesCorrectNumberOfRequests(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	const expectedCount = 15
+	const expectedCount = 20
 	if count != expectedCount {
 		t.Fatalf("Exepected %d requests, got %d", expectedCount, count)
 	}
@@ -54,6 +55,7 @@ func TestFuzzerGeneratesExpectedNumberOfRequests(t *testing.T) {
 	request, _ := http.NewRequest("GET", "", nil)
 	config := &Config{
 		TargetHeaders: []string{"Host", "Pragma", "User-Agent"},
+		TargetParams:  []string{"fuzz"},
 		Wordlist:      wordlist,
 		Seed:          &Request{request},
 		Client:        &Client{&http.Client{}},

@@ -78,6 +78,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 
 	config := &httpfuzz.Config{
 		TargetHeaders: c.StringSlice("target-header"),
+		TargetParams:  c.StringSlice("target-param"),
 		Wordlist:      wordlist,
 		Client:        &httpfuzz.Client{Client: httpClient},
 		Seed:          &httpfuzz.Request{Request: request},
@@ -158,6 +159,10 @@ func main() {
 				Name:     "proxy-ca-pem",
 				Required: false,
 				Usage:    "PEM encoded CA Certificate for TLS requests through a proxy",
+			},
+			&cli.StringSliceFlag{
+				Name:  "target-param",
+				Usage: "URL Query string param to fuzz",
 			},
 		},
 	}

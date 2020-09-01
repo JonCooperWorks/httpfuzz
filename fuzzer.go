@@ -44,12 +44,12 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 			for _, header := range f.TargetHeaders {
 				req, err := f.Seed.CloneBody(context.Background())
 				if err != nil {
+					f.Logger.Printf("Error cloning request for header %s: %v", header, err)
 					continue
 				}
 
 				req.Header.Set(header, payload)
 
-				// Push generated requests into the queue as they are created
 				requestQueue <- &Job{
 					Request:   req,
 					FieldName: header,
@@ -58,7 +58,26 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 			}
 
-			// TODO: fuzz URL query params
+			// Fuzz URL query params
+			for _, param := range f.TargetParams {
+				req, err := f.Seed.CloneBody(context.Background())
+				if err != nil {
+					f.Logger.Printf("Error cloning request for param %s: %v", param, err)
+					continue
+				}
+
+				q := req.URL.Query()
+				q.Set(param, payload)
+				req.URL.RawQuery = q.Encode()
+
+				requestQueue <- &Job{
+					Request:   req,
+					FieldName: param,
+					Location:  urlParamLocation,
+					Payload:   payload,
+				}
+
+			}
 			// TODO: fuzz URL path args
 			// TODO: fuzz request body injection points
 		}
@@ -74,7 +93,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 // RequestCount calculates the total number of requests that will be sent given a set of input and the fields to be fuzzed using combinatorials.
 // This will be slower the larger the input file.
 func (f *Fuzzer) RequestCount() (int, error) {
-	var count int
+	count := 1
 	const lineBreak = '\n'
 
 	buf := make([]byte, bufio.MaxScanTokenSize)
@@ -100,7 +119,7 @@ func (f *Fuzzer) RequestCount() (int, error) {
 	}
 
 	// # of requests = # of lines per file * number of targets
-	count = (count + 1) * len(f.TargetHeaders)
+	count = (count * len(f.TargetHeaders)) + (count * len(f.TargetParams))
 
 	// Move back to the head of the file
 	_, err := f.Wordlist.Seek(0, io.SeekStart)

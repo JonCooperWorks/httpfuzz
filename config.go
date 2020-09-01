@@ -10,6 +10,7 @@ import (
 // Config holds all fuzzer configuration.
 type Config struct {
 	TargetHeaders []string
+	TargetParams  []string
 	Wordlist      *os.File
 	Seed          *Request
 	Client        *Client
