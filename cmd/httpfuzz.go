@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -29,8 +30,25 @@ func actionHTTPFuzz(c *cli.Context) error {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
+	proxyURL := c.String("proxy-url")
+	if proxyURL != "" {
+		proxy, err := url.Parse(proxyURL)
+		if err != nil {
+			return err
+		}
+
+		transport.Proxy = http.ProxyURL(proxy)
+	}
+
 	httpClient.Transport = transport
 	logger := log.New(os.Stdout, "httpfuzz: ", log.Ldate|log.Ltime|log.Lshortfile)
+
+	var urlScheme string
+	if c.Bool("https") {
+		urlScheme = "https"
+	} else {
+		urlScheme = "http"
+	}
 
 	config := &httpfuzz.Config{
 		TargetHeaders: c.StringSlice("target-header"),
@@ -39,7 +57,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 		Seed:          &httpfuzz.Request{Request: request},
 		Logger:        logger,
 		RequestDelay:  time.Duration(c.Int("delay-ms")) * time.Millisecond,
-		URLScheme:     c.String("url-scheme"),
+		URLScheme:     urlScheme,
 	}
 
 	fuzzer := &httpfuzz.Fuzzer{Config: config}
@@ -95,17 +113,20 @@ func main() {
 				Required: false,
 				Usage:    "HTTP headers to fuzz",
 			},
-			&cli.StringFlag{
-				Name:     "url-scheme",
+			&cli.BoolFlag{
+				Name:     "https",
 				Required: false,
-				Value:    "http",
-				Usage:    "URL scheme for requests. http or https",
 			},
 			&cli.BoolFlag{
 				Name:     "skip-cert-verify",
 				Required: false,
 				Value:    false,
 				Usage:    "skip verifying SSL certificate when making requests",
+			},
+			&cli.StringFlag{
+				Name:     "proxy-url",
+				Required: false,
+				Usage:    "HTTP proxy to send requests through",
 			},
 		},
 	}
