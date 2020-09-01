@@ -68,10 +68,14 @@ func TestFuzzerGeneratesExpectedNumberOfRequests(t *testing.T) {
 
 	requests := fuzzer.GenerateRequests()
 	count := 0
-	for request := range requests {
+	for job := range requests {
 		// A nil request represents the end of stream.
-		if request == nil {
+		if job == nil {
 			break
+		}
+
+		if job.Request == nil {
+			t.Fatalf("Nil request received for %+v", *job)
 		}
 
 		count++
