@@ -2,6 +2,7 @@ package httpfuzz
 
 // Plugin must be implemented by a plugin to users to hook the request - response transaction.
 type Plugin interface {
+	Initialize(args map[string]string) error
 	OnSuccess(result *Result) error
 	Name() string
 }
