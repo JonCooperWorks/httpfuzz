@@ -6,7 +6,7 @@ type Plugin interface {
 	Name() string
 }
 
-// Result is the request, response and associated metadata.
+// Result is the request, response and associated metadata to be processed by plugins.
 type Result struct {
 	Request   *Request
 	Response  *Response

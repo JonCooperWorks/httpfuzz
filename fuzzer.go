@@ -131,7 +131,7 @@ func (f *Fuzzer) requestWorker(job *Job) {
 	job.Request.URL.Scheme = f.URLScheme
 
 	// Keep the request body around for the plugins.
-	req, err := job.Request.CloneBody(context.Background())
+	request, err := job.Request.CloneBody(context.Background())
 	if err != nil {
 		f.Logger.Printf("Error cloning request body: %v", err)
 		return
@@ -146,7 +146,7 @@ func (f *Fuzzer) requestWorker(job *Job) {
 	f.Logger.Printf("Payload in %s: %s. Received: [%v]", job.Location, job.Payload, response.StatusCode)
 
 	for _, plugin := range f.Plugins {
-		r, err := req.CloneBody(context.Background())
+		req, err := request.CloneBody(context.Background())
 		if err != nil {
 			f.Logger.Printf("Error cloning request for plugin %s: %v", plugin.Name(), err)
 			continue
@@ -160,7 +160,7 @@ func (f *Fuzzer) requestWorker(job *Job) {
 
 		// Run each plugin in its own goroutine
 		result := &Result{
-			Request:   r,
+			Request:   req,
 			Response:  resp,
 			Payload:   job.Payload,
 			Location:  job.Location,
