@@ -1,8 +1,8 @@
 package httpfuzz
 
 import (
+	"io"
 	"log"
-	"os"
 	"sync"
 	"time"
 )
@@ -10,7 +10,7 @@ import (
 // Config holds all fuzzer configuration.
 type Config struct {
 	TargetHeaders []string
-	Wordlist      *os.File
+	Wordlist      io.Reader
 	Seed          *Request
 	Client        *Client
 	RequestDelay  time.Duration
