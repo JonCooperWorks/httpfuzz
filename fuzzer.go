@@ -12,8 +12,8 @@ import (
 const (
 	headerLocation     = "header"
 	bodyLocation       = "body"
-	urlParamLocation   = "urlParam"
-	urlPathArgLocation = "urlPathArg"
+	urlParamLocation   = "url param"
+	urlPathArgLocation = "url path argument"
 )
 
 // Job represents a request to send with a payload from the fuzzer.
