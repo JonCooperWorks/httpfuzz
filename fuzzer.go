@@ -57,6 +57,10 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 					Payload:   payload,
 				}
 			}
+
+			// TODO: fuzz URL query params
+			// TODO: fuzz URL path args
+			// TODO: fuzz request body injection points
 		}
 
 		// Signal to consumer that we're done
