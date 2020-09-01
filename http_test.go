@@ -63,7 +63,7 @@ func TestResponseClonePreservesOriginalBody(t *testing.T) {
 	}
 
 	if !bytes.Equal(clonedBody, originalBody) {
-		t.Fatalf("Cloned body does not match original, expected %s, got %s", originalBody, clonedBody)
+		t.Fatalf("Cloned body does not match original, expected %s, got %s", string(originalBody), string(clonedBody))
 	}
 
 	if response.Status != clonedResponse.Status {
