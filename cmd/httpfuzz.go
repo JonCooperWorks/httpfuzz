@@ -24,14 +24,11 @@ func actionHTTPFuzz(c *cli.Context) error {
 		return err
 	}
 
-	httpClient := &http.Client{}
-	transport := &http.Transport{}
-	if c.Bool("skip-cert-verify") {
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: c.Bool("skip-cert-verify")},
 	}
 
-	proxyURL := c.String("proxy-url")
-	if proxyURL != "" {
+	if proxyURL := c.String("proxy-url"); proxyURL != "" {
 		proxy, err := url.Parse(proxyURL)
 		if err != nil {
 			return err
@@ -40,7 +37,9 @@ func actionHTTPFuzz(c *cli.Context) error {
 		transport.Proxy = http.ProxyURL(proxy)
 	}
 
-	httpClient.Transport = transport
+	httpClient := &http.Client{
+		Transport: transport,
+	}
 	logger := log.New(os.Stdout, "httpfuzz: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	var urlScheme string
