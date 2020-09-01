@@ -28,6 +28,13 @@ func TestRequestClonePreservesOriginalBody(t *testing.T) {
 		t.Fatalf("Cloned body does not match original, expected %s, got %s", string(body), string(clonedBody))
 	}
 
+	if req.RequestURI != "" {
+		t.Fatalf("RequestURI was not removed before clone")
+	}
+
+	if request.URL.Host != clonedRequest.Host {
+		t.Fatalf("Host was not copied into URL")
+	}
 }
 
 func TestResponseClonePreservesOriginalBody(t *testing.T) {
