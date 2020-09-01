@@ -9,11 +9,12 @@ import (
 )
 
 const (
-	headerLocation        = "header"
-	bodyLocation          = "body"
-	urlParamLocation      = "url param"
-	urlPathArgLocation    = "url path argument"
-	directoryRootLocation = "url directory root"
+	headerLocation         = "header"
+	bodyLocation           = "body"
+	urlParamLocation       = "url param"
+	urlPathArgLocation     = "url path argument"
+	directoryRootLocation  = "url directory root"
+	directoryRootFieldName = "directory root"
 )
 
 // Job represents a request to send with a payload from the fuzzer.
@@ -104,9 +105,10 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 
 				req.SetDirectoryRoot(payload)
 				requestQueue <- &Job{
-					Request:  req,
-					Location: directoryRootLocation,
-					Payload:  payload,
+					Request:   req,
+					FieldName: directoryRootFieldName,
+					Location:  directoryRootLocation,
+					Payload:   payload,
 				}
 			}
 
