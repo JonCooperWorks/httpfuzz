@@ -17,6 +17,7 @@ func TestRequestClonePreservesOriginalBody(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Read the cloned body first to make sure the original body doesn't get consumed.
 	clonedBody, _ := ioutil.ReadAll(clonedRequest.Body)
 	body, _ := ioutil.ReadAll(request.Body)
 
@@ -55,6 +56,7 @@ func TestResponseClonePreservesOriginalBody(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Read the cloned body first to make sure the original body doesn't get consumed.
 	clonedBody, _ := ioutil.ReadAll(clonedResponse.Body)
 	originalBody, _ := ioutil.ReadAll(response.Body)
 
