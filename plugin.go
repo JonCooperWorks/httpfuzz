@@ -28,7 +28,6 @@ type Result struct {
 
 // LoadPlugins loads Plugins from binaries on the filesytem.
 func LoadPlugins(logger *log.Logger, paths []string, arguments []string) ([]Plugin, error) {
-	var pluginArgMap map[string][]string
 	plugins := []Plugin{}
 
 	// TODO: load plugin arguments from array
