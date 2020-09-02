@@ -1,11 +1,16 @@
 httpfuzz
 --------
+
+[![Documentation](https://godoc.org/github.com/JonCooperWorks/go-tdameritrade?status.svg)](https://godoc.org/github.com/JonCooperWorks/go-tdameritrade)
+
+
 ```httpfuzz``` is a fast HTTP fuzzer written in [Go](https://golang.org).
 It's inspired by [Burp Intruder](https://portswigger.net/burp/documentation/desktop/tools/intruder).
 It takes a seed request and uses a wordlist to generate requests.
 For ```m``` requests and ```n``` injection points, it will generate ```m * n``` requests.
+It can be used as a library, but is meant to be used with the included httpfuzz CLI.
 
-## Using httpfuzz
+## Using httpfuzz CLI
 ```
    httpfuzz - fuzz endpoints based on a HTTP request file
 
@@ -39,6 +44,7 @@ You can tag injection points in request bodies by surrounding them with the deli
 By default, it's ```*```.
 You can fuzz other parts of the request by with CLI flags.
 
+### Examples
 
 ```
 POST /api/devices HTTP/1.1
@@ -58,5 +64,5 @@ Content-Length: 35
 }
 ```
 
-In the above example request, we're fuzzing the ```name``` field.
+In the above example request file, we're fuzzing the ```name``` field.
 ```httpfuzz``` will insert values from the wordlist into that field, along with any other fields specified with the CLI flags.
