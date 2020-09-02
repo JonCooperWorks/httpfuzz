@@ -1,6 +1,8 @@
 package httpfuzz
 
-import "log"
+import (
+	"log"
+)
 
 // Plugin must be implemented by a plugin to users to hook the request - response transaction.
 type Plugin interface {
@@ -11,7 +13,7 @@ type Plugin interface {
 
 // Environment contains everything a Plugin needs to configure itself.
 type Environment struct {
-	Arguments map[string]string
+	Arguments map[string][]string
 	Logger    *log.Logger
 }
 
@@ -22,4 +24,16 @@ type Result struct {
 	Payload   string
 	Location  string
 	FieldName string
+}
+
+// LoadPlugins loads Plugins from binaries on the filesytem.
+func LoadPlugins(logger *log.Logger, paths []string, arguments []string) ([]Plugin, error) {
+	var pluginArgMap map[string][]string
+	plugins := []Plugin{}
+
+	// TODO: load plugin arguments from array
+	// TODO: load plugins from paths
+	// TODO: pass arguments from map to Plugin.Initialize based on Plugin.Name and the arg map
+
+	return plugins, nil
 }

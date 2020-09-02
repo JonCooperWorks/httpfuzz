@@ -84,6 +84,11 @@ func actionHTTPFuzz(c *cli.Context) error {
 		urlScheme = "http"
 	}
 
+	plugins, err := httpfuzz.LoadPlugins(logger, c.StringSlice("plugin"), c.StringSlice("plugin-arg"))
+	if err != nil {
+		return err
+	}
+
 	config := &httpfuzz.Config{
 		TargetHeaders:  c.StringSlice("target-header"),
 		TargetParams:   c.StringSlice("target-param"),
@@ -95,6 +100,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 		Logger:         logger,
 		RequestDelay:   time.Duration(c.Int("delay-ms")) * time.Millisecond,
 		URLScheme:      urlScheme,
+		Plugins:        plugins,
 	}
 
 	fuzzer := &httpfuzz.Fuzzer{Config: config}
@@ -139,6 +145,11 @@ func main() {
 				Name:     "plugin",
 				Required: false,
 				Usage:    "httpfuzz plugin binary",
+			},
+			&cli.StringSliceFlag{
+				Name:     "plugin-arg",
+				Required: false,
+				Usage:    "httpfuzz plugin argument. in the form plugin:value",
 			},
 			&cli.StringFlag{
 				Name:     "wordlist",
