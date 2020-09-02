@@ -207,7 +207,6 @@ func (r *Request) SetBodyPayloadAt(position int, delimiter byte, payload string)
 func delimiterIndex(position int, delimiterPositions []int) (int, int, error) {
 	// Sort list so this algorithm works
 	sort.Ints(delimiterPositions)
-	fmt.Println(delimiterPositions)
 
 	// Suffix arrays return matches in reverse.
 	for i := 0; i < len(delimiterPositions); i++ {
