@@ -33,3 +33,27 @@ GLOBAL OPTIONS:
    --target-delimiter value  delimiter to mark targets in request bodies (default: "*")
    --help, -h                show help (default: false)
 ```
+
+Seed requests are a text HTTP request.
+You can tag injection points in request bodies by surrounding them with the delimiter character specified at program startup with the ```--target-delimiter``` flag.
+By default, it's ```*```.
+You can fuzz other parts of the request by with CLI flags.
+
+
+```
+POST /api/devices HTTP/1.1
+Content-Type: application/json
+User-Agent: PostmanRuntime/7.26.3
+Accept: */*
+Cache-Control: no-cache
+Postman-Token: c5bcc2bc-90b4-4d06-b851-1cc670cd9afa
+Host: myprivate.network
+Accept-Encoding: gzip, deflate
+Connection: close
+Content-Length: 35
+
+{
+	"name": "*S9*",
+	"os": "Android"
+}
+```
