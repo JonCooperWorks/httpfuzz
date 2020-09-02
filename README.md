@@ -1,7 +1,7 @@
 httpfuzz
 --------
 
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/JonCooperWorks/httpfuzz)](https://pkg.go.dev/github.com/JonCooperWorks/httpfuzz)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/joncooperworks/httpfuzz)](https://pkg.go.dev/github.com/joncooperworks/httpfuzz)
 
 ```httpfuzz``` is a fast HTTP fuzzer written in [Go](https://golang.org).
 It's inspired by [Burp Intruder](https://portswigger.net/burp/documentation/desktop/tools/intruder).
