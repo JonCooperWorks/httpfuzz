@@ -1,0 +1,13 @@
+POST /api/devices HTTP/1.1
+x-csrf-token: VDYgn/QG5wRfqUouItv+MJTGfNmjav73bvqGpn89KnvAVFkTqWAzNVV3uKsnXC/p01YZSuHWUzxdlIErKArKxQ==
+Content-Type: application/json
+User-Agent: PostmanRuntime/7.26.3
+Accept: */*
+Cache-Control: no-cache
+Postman-Token: 502f241c-ccfe-462e-baf2-bd6c21485a79
+Host: localhost:8000
+Accept-Encoding: gzip, deflate
+Connection: close
+Content-Length: 35
+
+{"name": "*S9*","os": "Android"}

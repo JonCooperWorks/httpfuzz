@@ -1,6 +1,8 @@
 package httpfuzz
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestHTTPRequestInvalidFileReturnsError(t *testing.T) {
 	req, err := RequestFromFile("notfound.request")
@@ -34,4 +36,28 @@ func TestHTTPRequestParsedCorrectlyFromFile(t *testing.T) {
 	if req.Header.Get("Cache-Control") != "no-cache" {
 		t.Fatalf("got unexpected cache-control header")
 	}
+}
+
+func TestPOSTRequestBodyParsedCorrectlyFromFile(t *testing.T) {
+	req, err := RequestFromFile("./testdata/validPOST.request")
+	if err != nil {
+		t.Fatalf("expected err to be nil, got %v", err)
+	}
+
+	if req.Method != "POST" {
+		t.Fatalf("expected POST, got %v", req.Method)
+	}
+
+	if req.Host != "localhost:8000" {
+		t.Fatalf("expected URL 'localhost:8000', got %v", req.Host)
+	}
+
+	if req.UserAgent() != "PostmanRuntime/7.26.3" {
+		t.Fatalf("got unexpected User-Agent %v", req.UserAgent())
+	}
+
+	if req.Header.Get("Cache-Control") != "no-cache" {
+		t.Fatalf("got unexpected cache-control header")
+	}
+
 }

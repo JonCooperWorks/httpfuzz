@@ -144,11 +144,6 @@ func (r *Request) RemoveDelimiters(delimiter byte) error {
 		return nil
 	}
 
-	targetCount, err := r.BodyTargetCount('*')
-	if err != nil {
-		return err
-	}
-
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
@@ -158,7 +153,7 @@ func (r *Request) RemoveDelimiters(delimiter byte) error {
 	body = bytes.Replace(body, []byte{delimiter}, []byte{}, -1)
 
 	// Adjust content length
-	r.Request.ContentLength = r.Request.ContentLength - int64(targetCount*2)
+	r.Request.ContentLength = int64(len(body))
 
 	// Put back request body without the delimiters.
 	r.Request.Body = ioutil.NopCloser(bytes.NewReader(body))

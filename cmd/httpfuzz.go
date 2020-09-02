@@ -22,12 +22,11 @@ func actionHTTPFuzz(c *cli.Context) error {
 	}
 	defer wordlist.Close()
 
-	request, err := httpfuzz.RequestFromFile(c.String("seed-request"))
+	seedRequest, err := httpfuzz.RequestFromFile(c.String("seed-request"))
 	if err != nil {
 		return err
 	}
 
-	seedRequest := &httpfuzz.Request{Request: request}
 	targetPathArgs := c.StringSlice("target-path-arg")
 	for _, arg := range targetPathArgs {
 		if !seedRequest.HasPathArgument(arg) {
