@@ -49,6 +49,7 @@ func (r *Request) CloneBody(ctx context.Context) (*Request, error) {
 	if err != nil {
 		return req, err
 	}
+	defer req.Body.Close()
 
 	// Put back the original body
 	r.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
@@ -152,6 +153,7 @@ func (r *Request) RemoveDelimiters(delimiter byte) error {
 	if err != nil {
 		return err
 	}
+	defer r.Body.Close()
 
 	body = bytes.Replace(body, []byte{delimiter}, []byte{}, -1)
 
@@ -173,6 +175,7 @@ func (r *Request) SetBodyPayloadAt(position int, delimiter byte, payload string)
 	if err != nil {
 		return err
 	}
+	defer r.Body.Close()
 
 	// Calculate the offsets in the body that correspond to the position
 	index := suffixarray.New(body)
@@ -253,6 +256,7 @@ func (r *Response) CloneBody() (*Response, error) {
 	if err != nil {
 		return &Response{Response: newResponse}, err
 	}
+	defer r.Response.Body.Close()
 
 	// Put back the original body
 	r.Response.Body = ioutil.NopCloser(bytes.NewReader(body))
