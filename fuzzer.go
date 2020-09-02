@@ -126,7 +126,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 					continue
 				}
 
-				err = req.SetBodyTargetPayload(position, f.Client.TargetDelimiter, payload)
+				err = req.SetBodyPayloadAt(position, f.Client.TargetDelimiter, payload)
 				if err != nil {
 					f.Logger.Printf("Error injecting payload into position %d: %v", position, err)
 					continue

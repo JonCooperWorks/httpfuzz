@@ -159,8 +159,9 @@ func TestRemoveDelimiters(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if request.ContentLength != previousContentLength-int64(targetCount*2) {
-		t.Fatal("Content length was not adjusted")
+	expectedContentLength := previousContentLength - int64(targetCount*2)
+	if request.ContentLength != expectedContentLength {
+		t.Fatalf("Content length does not match, expected %d, got %d", expectedContentLength, request.ContentLength)
 	}
 
 	expectedBody := []byte("{\"type\": \"body\", \"second\": \"value\"}")
@@ -193,13 +194,17 @@ func TestRemoveDelimitersEmptyRequestBody(t *testing.T) {
 func TestInjectPayload(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body*\", \"second\": \"*value*\"}"))
 	request := &Request{req}
-	err := request.SetBodyTargetPayload(0, '*', "test")
+	err := request.SetBodyPayloadAt(0, '*', "test")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expectedBody := []byte("{\"type\": \"test\", \"second\": \"*value*\"}")
 	actualBody, _ := ioutil.ReadAll(request.Body)
+
+	if request.ContentLength != int64(len(expectedBody)) {
+		t.Fatalf("Content length does not match, expected %d, got %d", len(expectedBody), request.ContentLength)
+	}
 
 	// Ensure request body is not consumed when injecting payload.
 	if len(actualBody) == 0 {
@@ -214,7 +219,7 @@ func TestInjectPayload(t *testing.T) {
 func TestInjectPayloadUnbalancedDelimiters(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body\", \"second\": \"*value*\"}"))
 	request := &Request{req}
-	err := request.SetBodyTargetPayload(0, '*', "test")
+	err := request.SetBodyPayloadAt(0, '*', "test")
 	if err == nil {
 		t.Fatal("Expected error with imbalanced delimiters.")
 	}

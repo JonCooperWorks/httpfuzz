@@ -163,8 +163,8 @@ func (r *Request) RemoveDelimiters(delimiter byte) error {
 	return nil
 }
 
-// SetBodyTargetPayload injects a payload at a given position.
-func (r *Request) SetBodyTargetPayload(position int, delimiter byte, payload string) error {
+// SetBodyPayloadAt injects a payload at a given position.
+func (r *Request) SetBodyPayloadAt(position int, delimiter byte, payload string) error {
 	if r.Body == nil {
 		return nil
 	}
@@ -194,7 +194,7 @@ func (r *Request) SetBodyTargetPayload(position int, delimiter byte, payload str
 	newBody = append(newBody, suffix...)
 
 	// Adjust content length
-	r.Request.ContentLength = r.Request.ContentLength - int64(2)
+	r.Request.ContentLength = int64(len(newBody))
 
 	// Put back request body with the injected target.
 	r.Request.Body = ioutil.NopCloser(bytes.NewReader(newBody))
