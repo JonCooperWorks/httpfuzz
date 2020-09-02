@@ -202,8 +202,9 @@ func TestInjectPayload(t *testing.T) {
 	expectedBody := []byte("{\"type\": \"test\", \"second\": \"*value*\"}")
 	actualBody, _ := ioutil.ReadAll(request.Body)
 
-	if request.ContentLength != int64(len(expectedBody)) {
-		t.Fatalf("Content length does not match, expected %d, got %d", len(expectedBody), request.ContentLength)
+	expectedContentLength := int64(len(expectedBody))
+	if request.ContentLength != expectedContentLength {
+		t.Fatalf("Content length does not match, expected %d, got %d", expectedContentLength, request.ContentLength)
 	}
 
 	// Ensure request body is not consumed when injecting payload.
