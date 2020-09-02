@@ -1,8 +1,11 @@
 package httpfuzz
 
 import (
+	"bufio"
 	"bytes"
 	"context"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -11,10 +14,12 @@ import (
 // Client is a modified net/http Client that can natively handle our request and response types
 type Client struct {
 	*http.Client
+	TargetDelimiter byte
 }
 
 // Do wraps Go's net/http client with our Request and Response types.
 func (c *Client) Do(req *Request) (*Response, error) {
+	req.RemoveDelimiters(c.TargetDelimiter)
 	resp, err := c.Client.Do(req.Request)
 	return &Response{Response: resp}, err
 }
@@ -87,6 +92,73 @@ func (r *Request) SetDirectoryRoot(value string) {
 	path := strings.Split(r.URL.EscapedPath(), "/")
 	path = append(path, value)
 	r.Request.URL.Path = strings.Join(path, "/")
+}
+
+// BodyTargetCount calculates the number of targets in a request body.
+func (r *Request) BodyTargetCount(delimiter byte) (int, error) {
+	if r.Body == nil {
+		return 0, nil
+	}
+
+	clone, err := r.CloneBody(context.Background())
+	if err != nil {
+		return 0, err
+	}
+
+	count := 0
+	buf := make([]byte, bufio.MaxScanTokenSize)
+
+	for {
+		bufferSize, err := clone.Body.Read(buf)
+		if err != nil && err != io.EOF {
+			return 0, err
+		}
+
+		var buffPosition int
+		for {
+			i := bytes.IndexByte(buf[buffPosition:], delimiter)
+			if i == -1 || bufferSize == buffPosition {
+				break
+			}
+			buffPosition += i + 1
+			count++
+		}
+		if err == io.EOF {
+			break
+		}
+	}
+
+	if count%2 != 0 {
+		return 0, fmt.Errorf("unbalanced delimiters")
+	}
+
+	return count / 2, nil
+}
+
+// RemoveDelimiters removes all target delimiters from a request so it can be sent to the server and interpreted properly.
+func (r *Request) RemoveDelimiters(delimiter byte) error {
+	if r.Body == nil {
+		return nil
+	}
+
+	targetCount, err := r.BodyTargetCount('*')
+	if err != nil {
+		return err
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+
+	body = bytes.Replace(body, []byte{delimiter}, []byte{}, -1)
+
+	// Adjust content length
+	r.Request.ContentLength = r.Request.ContentLength - int64(targetCount*2)
+
+	// Put back request body without the delimiters.
+	r.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
+	return nil
 }
 
 // Response is a *http.Response that allows cloning its body.

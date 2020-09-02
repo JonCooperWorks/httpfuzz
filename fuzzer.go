@@ -112,7 +112,29 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 			}
 
-			// TODO: fuzz request body injection points
+			// Fuzz request body injection points
+			targetCount, err := f.Seed.BodyTargetCount(f.Client.TargetDelimiter)
+			if err != nil {
+				f.Logger.Printf("Error counting targets %v", err)
+				continue
+			}
+
+			for i := 0; i < targetCount; i++ {
+				req, err := f.Seed.CloneBody(context.Background())
+				if err != nil {
+					f.Logger.Printf("Error cloning request for body target %v", err)
+					continue
+				}
+
+				// TODO: actually inject payload into request body
+
+				requestQueue <- &Job{
+					Request:   req,
+					FieldName: bodyLocation,
+					Location:  bodyLocation,
+					Payload:   payload,
+				}
+			}
 		}
 
 		// Signal to consumer that we're done
@@ -151,14 +173,23 @@ func (f *Fuzzer) RequestCount() (int, error) {
 		}
 	}
 
+	bodyTargetCount, err := f.Seed.BodyTargetCount(f.Client.TargetDelimiter)
+	if err != nil {
+		return 0, err
+	}
+
 	// # of requests = # of lines per file * number of targets
-	numRequests := (count * len(f.TargetHeaders)) + (count * len(f.TargetParams)) + (count * len(f.TargetPathArgs))
+	numRequests := (count * len(f.TargetHeaders)) +
+		(count * len(f.TargetParams)) +
+		(count * len(f.TargetPathArgs)) +
+		(count * bodyTargetCount)
+
 	if f.FuzzDirectory {
 		numRequests = numRequests + count
 	}
 
 	// Move back to the head of the file
-	_, err := f.Wordlist.Seek(0, io.SeekStart)
+	_, err = f.Wordlist.Seek(0, io.SeekStart)
 	if err != nil {
 		return numRequests, err
 	}

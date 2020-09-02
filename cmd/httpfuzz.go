@@ -89,13 +89,26 @@ func actionHTTPFuzz(c *cli.Context) error {
 		return err
 	}
 
+	delimiter := []byte(c.String("target-delimiter"))[0]
+
+	// Validate that the request body is properly delimitered
+	_, err = seedRequest.BodyTargetCount(delimiter)
+	if err != nil {
+		return err
+	}
+
+	client := &httpfuzz.Client{
+		Client:          httpClient,
+		TargetDelimiter: delimiter,
+	}
+
 	config := &httpfuzz.Config{
 		TargetHeaders:  c.StringSlice("target-header"),
 		TargetParams:   c.StringSlice("target-param"),
 		FuzzDirectory:  c.Bool("dirbuster"),
 		TargetPathArgs: targetPathArgs,
 		Wordlist:       wordlist,
-		Client:         &httpfuzz.Client{Client: httpClient},
+		Client:         client,
 		Seed:           seedRequest,
 		Logger:         logger,
 		RequestDelay:   time.Duration(c.Int("delay-ms")) * time.Millisecond,
@@ -193,6 +206,11 @@ func main() {
 				Name:     "dirbuster",
 				Required: false,
 				Usage:    "brute force directory names from wordlist",
+			},
+			&cli.StringFlag{
+				Name:  "target-delimiter",
+				Usage: "delimiter to mark targets in request bodies",
+				Value: "*",
 			},
 		},
 	}

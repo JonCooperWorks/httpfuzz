@@ -120,3 +120,73 @@ func TestSetDirectoryRoot(t *testing.T) {
 		t.Fatalf("Expected %s, got %s", expectedURL, actualURL)
 	}
 }
+
+func TestBodyTargetCount(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("*body**second*"))
+	request := &Request{req}
+
+	count, err := request.BodyTargetCount('*')
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if count != 2 {
+		t.Fatalf("Expected 2, got %d", count)
+	}
+}
+
+func TestBodyTargetCountUnbalancedDelimiters(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("*body"))
+	request := &Request{req}
+
+	count, err := request.BodyTargetCount('*')
+	if err == nil {
+		t.Fatalf("Expected error, got %d", count)
+	}
+
+	if count != 0 {
+		t.Fatalf("Expected 0 count, got %d", count)
+	}
+}
+
+func TestRemoveDelimiters(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body*\", \"second\": \"*value*\"}"))
+	request := &Request{req}
+	previousContentLength := request.ContentLength
+	targetCount, _ := request.BodyTargetCount('*')
+	err := request.RemoveDelimiters('*')
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if request.ContentLength != previousContentLength-int64(targetCount*2) {
+		t.Fatal("Content length was not adjusted")
+	}
+
+	expectedBody := []byte("{\"type\": \"body\", \"second\": \"value\"}")
+	actualBody, _ := ioutil.ReadAll(request.Body)
+
+	// Ensure request body is not consumed when replacing delimiters.
+	if len(actualBody) == 0 {
+		t.Fatal("Request body was consumed")
+	}
+
+	if !bytes.Equal(actualBody, expectedBody) {
+		t.Fatalf("bodies do not match. expected %s, got %s", string(expectedBody), string(actualBody))
+	}
+}
+
+func TestRemoveDelimitersEmptyRequestBody(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/test/path?param=test", nil)
+	request := &Request{req}
+	err := request.RemoveDelimiters('*')
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Ensure request body remains empty.
+	if request.Body != nil {
+		t.Fatal("Request body not expected")
+	}
+
+}

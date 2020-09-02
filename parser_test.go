@@ -23,8 +23,8 @@ func TestHTTPRequestParsedCorrectlyFromFile(t *testing.T) {
 		t.Fatalf("expected GET, got %v", req.Method)
 	}
 
-	if req.Host != "detectportal.firefox.com" {
-		t.Fatalf("expected URL 'detectportal.firefox.com', got %v", req.Host)
+	if req.Host != "localhost:8000" {
+		t.Fatalf("expected URL 'localhost:8000', got %v", req.Host)
 	}
 
 	if req.UserAgent() != "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0) Gecko/20100101 Firefox/78.0" {
