@@ -57,3 +57,6 @@ Content-Length: 35
 	"os": "Android"
 }
 ```
+
+In the above example request, we're fuzzing the ```name``` field.
+```httpfuzz``` will insert values from the wordlist into that field, along with any other fields specified with the CLI flags.
