@@ -119,18 +119,21 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				continue
 			}
 
-			for i := 0; i < targetCount; i++ {
+			for position := 0; position < targetCount; position++ {
 				req, err := f.Seed.CloneBody(context.Background())
 				if err != nil {
 					f.Logger.Printf("Error cloning request for body target %v", err)
 					continue
 				}
 
-				// TODO: actually inject payload into request body
-
+				err = req.SetBodyTargetPayload(position, f.Client.TargetDelimiter, payload)
+				if err != nil {
+					f.Logger.Printf("Error injecting payload into position %d: %v", position, err)
+					continue
+				}
 				requestQueue <- &Job{
 					Request:   req,
-					FieldName: bodyLocation,
+					FieldName: string(position),
 					Location:  bodyLocation,
 					Payload:   payload,
 				}

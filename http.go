@@ -5,9 +5,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"index/suffixarray"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strings"
 )
 
@@ -159,6 +161,59 @@ func (r *Request) RemoveDelimiters(delimiter byte) error {
 	// Put back request body without the delimiters.
 	r.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
 	return nil
+}
+
+// SetBodyTargetPayload injects a payload at a given position.
+func (r *Request) SetBodyTargetPayload(position int, delimiter byte, payload string) error {
+	if r.Body == nil {
+		return nil
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+
+	// Calculate the offsets in the body that correspond to the position
+	index := suffixarray.New(body)
+	delimiterPositions := index.Lookup([]byte{delimiter}, -1)
+	if len(delimiterPositions)%2 != 0 {
+		return fmt.Errorf("unbalanced delimiters")
+	}
+	start, end, err := delimiterIndex(position, delimiterPositions)
+	if err != nil {
+		return err
+	}
+
+	// Replace bytes between the start and end offset with payload bytes and the delimiters removed.
+	prefix := body[0:start]
+	suffix := body[end+1 : len(body)]
+	newBody := []byte{}
+	newBody = append(newBody, prefix...)
+	newBody = append(newBody, []byte(payload)...)
+	newBody = append(newBody, suffix...)
+
+	// Adjust content length
+	r.Request.ContentLength = r.Request.ContentLength - int64(2)
+
+	// Put back request body with the injected target.
+	r.Request.Body = ioutil.NopCloser(bytes.NewReader(newBody))
+	return nil
+}
+
+func delimiterIndex(position int, delimiterPositions []int) (int, int, error) {
+	// Sort list so this algorithm works
+	sort.Ints(delimiterPositions)
+	fmt.Println(delimiterPositions)
+
+	// Suffix arrays return matches in reverse.
+	for i := 0; i < len(delimiterPositions); i++ {
+		if i/2-position <= 1 {
+			return delimiterPositions[i], delimiterPositions[i+1], nil
+		}
+	}
+
+	return 0, 0, fmt.Errorf("position out of range")
 }
 
 // Response is a *http.Response that allows cloning its body.

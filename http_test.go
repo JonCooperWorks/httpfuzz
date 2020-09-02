@@ -188,5 +188,34 @@ func TestRemoveDelimitersEmptyRequestBody(t *testing.T) {
 	if request.Body != nil {
 		t.Fatal("Request body not expected")
 	}
+}
 
+func TestInjectPayload(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body*\", \"second\": \"*value*\"}"))
+	request := &Request{req}
+	err := request.SetBodyTargetPayload(0, '*', "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedBody := []byte("{\"type\": \"test\", \"second\": \"*value*\"}")
+	actualBody, _ := ioutil.ReadAll(request.Body)
+
+	// Ensure request body is not consumed when injecting payload.
+	if len(actualBody) == 0 {
+		t.Fatal("Request body was consumed")
+	}
+
+	if !bytes.Equal(actualBody, expectedBody) {
+		t.Fatalf("bodies do not match. expected %s, got %s", string(expectedBody), string(actualBody))
+	}
+}
+
+func TestInjectPayloadUnbalancedDelimiters(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body\", \"second\": \"*value*\"}"))
+	request := &Request{req}
+	err := request.SetBodyTargetPayload(0, '*', "test")
+	if err == nil {
+		t.Fatal("Expected error with imbalanced delimiters.")
+	}
 }
