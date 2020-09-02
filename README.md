@@ -1,8 +1,7 @@
 httpfuzz
 --------
 
-[![Documentation](https://godoc.org/github.com/JonCooperWorks/go-tdameritrade?status.svg)](https://godoc.org/github.com/JonCooperWorks/go-tdameritrade)
-
+[![PkgGoDev](https://pkg.go.dev/badge/JonCooperWorks/httpfuzz)](https://pkg.go.dev/JonCooperWorks/httpfuzz)
 
 ```httpfuzz``` is a fast HTTP fuzzer written in [Go](https://golang.org).
 It's inspired by [Burp Intruder](https://portswigger.net/burp/documentation/desktop/tools/intruder).
