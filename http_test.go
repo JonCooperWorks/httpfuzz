@@ -125,7 +125,7 @@ func TestBodyTargetCount(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("*body**second*"))
 	request := &Request{req}
 
-	count, err := request.BodyTargetCount('*')
+	count, err := request.BodyTargetCount('`')
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +139,7 @@ func TestBodyTargetCountUnbalancedDelimiters(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("*body"))
 	request := &Request{req}
 
-	count, err := request.BodyTargetCount('*')
+	count, err := request.BodyTargetCount('`')
 	if err == nil {
 		t.Fatalf("Expected error, got %d", count)
 	}
@@ -153,8 +153,8 @@ func TestRemoveDelimiters(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body*\", \"second\": \"*value*\"}"))
 	request := &Request{req}
 	previousContentLength := request.ContentLength
-	targetCount, _ := request.BodyTargetCount('*')
-	err := request.RemoveDelimiters('*')
+	targetCount, _ := request.BodyTargetCount('`')
+	err := request.RemoveDelimiters('`')
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +180,7 @@ func TestRemoveDelimiters(t *testing.T) {
 func TestRemoveDelimitersEmptyRequestBody(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/test/path?param=test", nil)
 	request := &Request{req}
-	err := request.RemoveDelimiters('*')
+	err := request.RemoveDelimiters('`')
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +194,7 @@ func TestRemoveDelimitersEmptyRequestBody(t *testing.T) {
 func TestInjectPayload(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body*\", \"second\": \"*value*\"}"))
 	request := &Request{req}
-	err := request.SetBodyPayloadAt(0, '*', "test")
+	err := request.SetBodyPayloadAt(0, '`', "test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,7 +220,7 @@ func TestInjectPayload(t *testing.T) {
 func TestInjectPayloadUnbalancedDelimiters(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body\", \"second\": \"*value*\"}"))
 	request := &Request{req}
-	err := request.SetBodyPayloadAt(0, '*', "test")
+	err := request.SetBodyPayloadAt(0, '`', "test")
 	if err == nil {
 		t.Fatal("Expected error with imbalanced delimiters.")
 	}

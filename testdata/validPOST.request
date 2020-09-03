@@ -11,7 +11,7 @@ Connection: close
 Content-Length: 37
 
 {
-	"name": "*S9*",
+	"name": "`S9`",
 	"os": "Android"
 }
 

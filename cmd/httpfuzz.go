@@ -209,7 +209,7 @@ func main() {
 			&cli.StringFlag{
 				Name:  "target-delimiter",
 				Usage: "delimiter to mark targets in request bodies",
-				Value: "*",
+				Value: "`",
 			},
 		},
 	}
