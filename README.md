@@ -34,7 +34,7 @@ GLOBAL OPTIONS:
    --target-param value      URL Query string param to fuzz
    --target-path-arg value   URL path argument to fuzz
    --dirbuster               brute force directory names from wordlist (default: false)
-   --target-delimiter value  delimiter to mark targets in request bodies (default: "*")
+   --target-delimiter value  delimiter to mark targets in request bodies (default: "`")
    --help, -h                show help (default: false)
 ```
 
