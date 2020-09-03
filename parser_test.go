@@ -1,6 +1,7 @@
 package httpfuzz
 
 import (
+	"io/ioutil"
 	"testing"
 )
 
@@ -60,4 +61,15 @@ func TestPOSTRequestBodyParsedCorrectlyFromFile(t *testing.T) {
 		t.Fatalf("got unexpected cache-control header")
 	}
 
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check for truncation bug
+	const expectedLength = 37
+	if len(body) != expectedLength {
+		t.Log(string(body))
+		t.Fatalf("Body is incorrect length, expected %d, got %d", expectedLength, len(body))
+	}
 }
