@@ -6,7 +6,7 @@ httpfuzz
 ```httpfuzz``` is a fast HTTP fuzzer written in [Go](https://golang.org).
 It's inspired by [Burp Intruder](https://portswigger.net/burp/documentation/desktop/tools/intruder).
 It takes a seed request and uses a wordlist to generate requests.
-For a wordlist with```m``` words and a request with ```n``` injection points, it will generate ```m * n``` requests.
+For a wordlist with ```m``` words and a request with ```n``` injection points, it will generate ```m * n``` requests.
 It can be used as a library, but is meant to be used with the included httpfuzz CLI.
 
 ## Using httpfuzz CLI
