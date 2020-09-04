@@ -153,16 +153,6 @@ func main() {
 				Required: false,
 				Usage:    "the delay between each HTTP request in milliseconds",
 			},
-			&cli.StringSliceFlag{
-				Name:     "plugin",
-				Required: false,
-				Usage:    "httpfuzz plugin binary",
-			},
-			&cli.StringSliceFlag{
-				Name:     "plugin-arg",
-				Required: false,
-				Usage:    "httpfuzz plugin argument. in the form plugin:value",
-			},
 			&cli.StringFlag{
 				Name:     "wordlist",
 				Required: true,

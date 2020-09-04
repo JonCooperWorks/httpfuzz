@@ -22,9 +22,7 @@ COMMANDS:
 GLOBAL OPTIONS:
    --count-only              don't send the requests, just count how many would be sent (default: false)
    --seed-request value      the request to be fuzzed
-   --delay-ms value          the delay between each HTTP request in milliseconds (default: 0)
-   --plugin value            httpfuzz plugin binary
-   --plugin-arg value        httpfuzz plugin argument. in the form plugin:value
+   --delay-ms value          the delay between each HTTP request in milliseconds (default: 0)]
    --wordlist value          newline separated wordlist for the fuzzer
    --target-header value     HTTP headers to fuzz
    --https                   (default: false)
