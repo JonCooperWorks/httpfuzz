@@ -9,13 +9,13 @@ For a wordlist with `m` words and a seed request with `n` injection points, `htt
 It can be used as a library, but is meant to be used with the included `httpfuzz` CLI.
 
 ## Using httpfuzz CLI
-`
+```
    httpfuzz - fuzz endpoints based on a HTTP request file
 
 USAGE:
    httpfuzz [global options] command [command options] [arguments...]
 
-COMMANDS:
+COMMANDS:s
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -33,7 +33,7 @@ GLOBAL OPTIONS:
    --dirbuster               brute force directory names from wordlist (default: false)
    --target-delimiter value  delimiter to mark targets in request bodies (default: "`")
    --help, -h                show help (default: false)
-`
+```
 
 Seed requests are a text HTTP request.
 You can tag injection points in request bodies by surrounding them with the delimiter character specified at program startup with the `--target-delimiter` flag.
@@ -42,7 +42,7 @@ You can fuzz other parts of the request by with CLI flags.
 
 ### Examples
 
-`
+```
 POST /api/devices HTTP/1.1
 Content-Type: application/json
 User-Agent: PostmanRuntime/7.26.3
@@ -58,7 +58,7 @@ Content-Length: 35
 	"name": "`S9`",
 	"os": "Android"
 }
-`
+```
 
 The backticks (`` ` ``) indicate a spot in the request body to inject payloads from the wordlist.
 
