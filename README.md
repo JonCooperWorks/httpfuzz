@@ -62,7 +62,7 @@ Content-Length: 35
 
 The backticks (`` ` ``) indicate a spot in the request body to inject payloads from the wordlist.
 
-`
+```
 httpfuzz \
    --wordlist testdata/useragents.txt \
    --seed-request testdata/validPOST.request \
@@ -75,7 +75,7 @@ httpfuzz \
    --target-param fuzz \
    --https \
    --dirbuster
-`
+```
 
 In the above example, `httpfuzz` will insert values from the wordlist into the `name` field, the `Pragma`, `User-Agent` and `Host` headers, the end of the URL (like [dirbuster](https://tools.kali.org/web-applications/dirbuster#:~:text=DirBuster%20is%20a%20multi%20threaded,pages%20and%20applications%20hidden%20within.)) and the URL parameter `fuzz`.
 
