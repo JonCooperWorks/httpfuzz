@@ -49,7 +49,7 @@ User-Agent: PostmanRuntime/7.26.3
 Accept: */*
 Cache-Control: no-cache
 Postman-Token: c5bcc2bc-90b4-4d06-b851-1cc670cd9afa
-Host: myprivate.network
+Host: localhost:8000
 Accept-Encoding: gzip, deflate
 Connection: close
 Content-Length: 35
