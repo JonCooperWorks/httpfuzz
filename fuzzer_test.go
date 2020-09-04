@@ -139,11 +139,6 @@ func TestFuzzerGeneratesCorrectRequestsRequestBody(t *testing.T) {
 	requests := fuzzer.GenerateRequests()
 	count := 0
 	for job := range requests {
-		// A nil request represents the end of stream.
-		if job == nil {
-			break
-		}
-
 		if job.Request == nil {
 			t.Fatalf("Nil request received for %+v", *job)
 		}

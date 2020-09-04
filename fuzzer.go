@@ -150,7 +150,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 		}
 
 		// Signal to consumer that we're done
-		requestQueue <- nil
+		close(requestQueue)
 
 	}(requestQueue)
 
@@ -212,11 +212,6 @@ func (f *Fuzzer) RequestCount() (int, error) {
 // ProcessRequests executes HTTP requests in as they're received over the channel.
 func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Job) {
 	for job := range requestQueue {
-		if job == nil {
-			// A nil job signals that the producer is finished.
-			break
-		}
-
 		go f.requestWorker(job)
 
 		// If there's no delay, it'll return immediately, so we don't need to waste time checking.
