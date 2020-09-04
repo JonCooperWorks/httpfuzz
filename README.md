@@ -3,13 +3,13 @@ httpfuzz
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/joncooperworks/httpfuzz)](https://pkg.go.dev/github.com/joncooperworks/httpfuzz)
 
-```httpfuzz``` is a fast HTTP fuzzer written in [Go](https://golang.org) inspired by [Burp Intruder](https://portswigger.net/burp/documentation/desktop/tools/intruder).
+`httpfuzz` is a fast HTTP fuzzer written in [Go](https://golang.org) inspired by [Burp Intruder](https://portswigger.net/burp/documentation/desktop/tools/intruder).
 It takes a seed request and uses a wordlist to generate requests.
-For a wordlist with ```m``` words and a seed request with ```n``` injection points, `httpfuzz` will generate ```m * n``` requests.
+For a wordlist with `m` words and a seed request with `n` injection points, `httpfuzz` will generate `m * n` requests.
 It can be used as a library, but is meant to be used with the included `httpfuzz` CLI.
 
 ## Using httpfuzz CLI
-```
+`
    httpfuzz - fuzz endpoints based on a HTTP request file
 
 USAGE:
@@ -33,16 +33,16 @@ GLOBAL OPTIONS:
    --dirbuster               brute force directory names from wordlist (default: false)
    --target-delimiter value  delimiter to mark targets in request bodies (default: "`")
    --help, -h                show help (default: false)
-```
+`
 
 Seed requests are a text HTTP request.
-You can tag injection points in request bodies by surrounding them with the delimiter character specified at program startup with the ```--target-delimiter``` flag.
+You can tag injection points in request bodies by surrounding them with the delimiter character specified at program startup with the `--target-delimiter` flag.
 By default, it's `` ` ``.
 You can fuzz other parts of the request by with CLI flags.
 
 ### Examples
 
-```
+`
 POST /api/devices HTTP/1.1
 Content-Type: application/json
 User-Agent: PostmanRuntime/7.26.3
@@ -58,11 +58,11 @@ Content-Length: 35
 	"name": "`S9`",
 	"os": "Android"
 }
-```
+`
 
 The backticks (`` ` ``) indicate a spot in the request body to inject payloads from the wordlist.
 
-```
+`
 httpfuzz \
    --wordlist testdata/useragents.txt \
    --seed-request testdata/validPOST.request \
@@ -75,10 +75,10 @@ httpfuzz \
    --target-param fuzz \
    --https \
    --dirbuster
-```
+`
 
-In the above example, ```httpfuzz``` will insert values from the wordlist into the `name` field, the `Pragma`, `User-Agent` and `Host` headers, the end of the URL (like [dirbuster](https://tools.kali.org/web-applications/dirbuster#:~:text=DirBuster%20is%20a%20multi%20threaded,pages%20and%20applications%20hidden%20within.)) and the URL parameter `fuzz`.
+In the above example, `httpfuzz` will insert values from the wordlist into the `name` field, the `Pragma`, `User-Agent` and `Host` headers, the end of the URL (like [dirbuster](https://tools.kali.org/web-applications/dirbuster#:~:text=DirBuster%20is%20a%20multi%20threaded,pages%20and%20applications%20hidden%20within.)) and the URL parameter `fuzz`.
 
 ### Building httpfuzz
-To build httpfuzz, simply run `go build -o httpfuzz cmd/httpfuzz.go`.
+To build `httpfuzz`, simply run `go build -o httpfuzz cmd/httpfuzz.go`.
 You can run the tests with `go test -v`.
