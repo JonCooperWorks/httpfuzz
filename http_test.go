@@ -122,7 +122,7 @@ func TestSetDirectoryRoot(t *testing.T) {
 }
 
 func TestBodyTargetCount(t *testing.T) {
-	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("*body**second*"))
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("`body``second`"))
 	request := &Request{req}
 
 	count, err := request.BodyTargetCount('`')
@@ -136,7 +136,7 @@ func TestBodyTargetCount(t *testing.T) {
 }
 
 func TestBodyTargetCountUnbalancedDelimiters(t *testing.T) {
-	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("*body"))
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("`body"))
 	request := &Request{req}
 
 	count, err := request.BodyTargetCount('`')
@@ -150,7 +150,7 @@ func TestBodyTargetCountUnbalancedDelimiters(t *testing.T) {
 }
 
 func TestRemoveDelimiters(t *testing.T) {
-	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body*\", \"second\": \"*value*\"}"))
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"`body`\", \"second\": \"`value`\"}"))
 	request := &Request{req}
 	previousContentLength := request.ContentLength
 	targetCount, _ := request.BodyTargetCount('`')
@@ -192,14 +192,14 @@ func TestRemoveDelimitersEmptyRequestBody(t *testing.T) {
 }
 
 func TestInjectPayload(t *testing.T) {
-	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body*\", \"second\": \"*value*\"}"))
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"`body`\", \"second\": \"`value`\"}"))
 	request := &Request{req}
 	err := request.SetBodyPayloadAt(0, '`', "test")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedBody := []byte("{\"type\": \"test\", \"second\": \"*value*\"}")
+	expectedBody := []byte("{\"type\": \"test\", \"second\": \"`value`\"}")
 	actualBody, _ := ioutil.ReadAll(request.Body)
 
 	expectedContentLength := int64(len(expectedBody))
@@ -218,7 +218,7 @@ func TestInjectPayload(t *testing.T) {
 }
 
 func TestInjectPayloadUnbalancedDelimiters(t *testing.T) {
-	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"*body\", \"second\": \"*value*\"}"))
+	req, _ := http.NewRequest("POST", "/test/path?param=test", strings.NewReader("{\"type\": \"`body\", \"second\": \"`value`\"}"))
 	request := &Request{req}
 	err := request.SetBodyPayloadAt(0, '`', "test")
 	if err == nil {

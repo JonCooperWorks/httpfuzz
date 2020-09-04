@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"index/suffixarray"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -173,8 +172,8 @@ func (r *Request) SetBodyPayloadAt(position int, delimiter byte, payload string)
 	defer r.Body.Close()
 
 	// Calculate the offsets in the body that correspond to the position
-	index := suffixarray.New(body)
-	delimiterPositions := index.Lookup([]byte{delimiter}, -1)
+	index := &DelimiterArray{Contents: body}
+	delimiterPositions := index.Lookup(byte(delimiter))
 	if len(delimiterPositions)%2 != 0 {
 		return fmt.Errorf("unbalanced delimiters")
 	}
