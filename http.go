@@ -14,12 +14,10 @@ import (
 // Client is a modified net/http Client that can natively handle our request and response types
 type Client struct {
 	*http.Client
-	TargetDelimiter byte
 }
 
 // Do wraps Go's net/http client with our Request and Response types.
 func (c *Client) Do(req *Request) (*Response, error) {
-	req.RemoveDelimiters(c.TargetDelimiter)
 	resp, err := c.Client.Do(req.Request)
 	return &Response{Response: resp}, err
 }

@@ -28,19 +28,19 @@ func TestFuzzerCalculatesCorrectNumberOfRequests(t *testing.T) {
 	}
 	request, _ := http.NewRequest("GET", "", nil)
 	client := &Client{
-		Client:          &http.Client{},
-		TargetDelimiter: '*',
+		Client: &http.Client{},
 	}
 	config := &Config{
-		TargetHeaders:  []string{"Host", "Pragma", "User-Agent"},
-		TargetParams:   []string{"fuzz"},
-		TargetPathArgs: []string{"user"},
-		FuzzDirectory:  true,
-		Wordlist:       wordlist,
-		Seed:           &Request{request},
-		Client:         client,
-		Logger:         testLogger(t),
-		URLScheme:      "http",
+		TargetHeaders:   []string{"Host", "Pragma", "User-Agent"},
+		TargetParams:    []string{"fuzz"},
+		TargetPathArgs:  []string{"user"},
+		FuzzDirectory:   true,
+		Wordlist:        wordlist,
+		Seed:            &Request{request},
+		Client:          client,
+		Logger:          testLogger(t),
+		TargetDelimiter: '*',
+		URLScheme:       "http",
 	}
 	fuzzer := &Fuzzer{config}
 	count, err := fuzzer.RequestCount()
@@ -61,19 +61,19 @@ func TestFuzzerGeneratesExpectedNumberOfRequests(t *testing.T) {
 	}
 	request, _ := http.NewRequest("GET", "", nil)
 	client := &Client{
-		Client:          &http.Client{},
-		TargetDelimiter: '*',
+		Client: &http.Client{},
 	}
 	config := &Config{
-		TargetHeaders:  []string{"Host", "Pragma", "User-Agent"},
-		TargetParams:   []string{"fuzz"},
-		TargetPathArgs: []string{"user"},
-		FuzzDirectory:  true,
-		Wordlist:       wordlist,
-		Seed:           &Request{request},
-		Client:         client,
-		Logger:         testLogger(t),
-		URLScheme:      "http",
+		TargetHeaders:   []string{"Host", "Pragma", "User-Agent"},
+		TargetParams:    []string{"fuzz"},
+		TargetPathArgs:  []string{"user"},
+		FuzzDirectory:   true,
+		Wordlist:        wordlist,
+		Seed:            &Request{request},
+		Client:          client,
+		TargetDelimiter: '*',
+		Logger:          testLogger(t),
+		URLScheme:       "http",
 	}
 	fuzzer := &Fuzzer{config}
 	expectedCount, err := fuzzer.RequestCount()
@@ -112,18 +112,18 @@ func TestFuzzerGeneratesCorrectRequestsRequestBody(t *testing.T) {
 	}
 	request, _ := http.NewRequest("POST", "", strings.NewReader("{\"type\": \"*body*\", \"second\": \"*value*\"}"))
 	client := &Client{
-		Client:          &http.Client{},
-		TargetDelimiter: '*',
+		Client: &http.Client{},
 	}
 	config := &Config{
-		TargetHeaders: []string{"Host", "Pragma", "User-Agent"},
-		TargetParams:  []string{"fuzz"},
-		FuzzDirectory: true,
-		Wordlist:      wordlist,
-		Seed:          &Request{request},
-		Client:        client,
-		Logger:        testLogger(t),
-		URLScheme:     "http",
+		TargetHeaders:   []string{"Host", "Pragma", "User-Agent"},
+		TargetParams:    []string{"fuzz"},
+		FuzzDirectory:   true,
+		Wordlist:        wordlist,
+		Seed:            &Request{request},
+		TargetDelimiter: '*',
+		Client:          client,
+		Logger:          testLogger(t),
+		URLScheme:       "http",
 	}
 	fuzzer := &Fuzzer{config}
 	expectedCount, err := fuzzer.RequestCount()

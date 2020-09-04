@@ -97,22 +97,22 @@ func actionHTTPFuzz(c *cli.Context) error {
 	}
 
 	client := &httpfuzz.Client{
-		Client:          httpClient,
-		TargetDelimiter: delimiter,
+		Client: httpClient,
 	}
 
 	config := &httpfuzz.Config{
-		TargetHeaders:  c.StringSlice("target-header"),
-		TargetParams:   c.StringSlice("target-param"),
-		FuzzDirectory:  c.Bool("dirbuster"),
-		TargetPathArgs: targetPathArgs,
-		Wordlist:       wordlist,
-		Client:         client,
-		Seed:           seedRequest,
-		Logger:         logger,
-		RequestDelay:   time.Duration(c.Int("delay-ms")) * time.Millisecond,
-		URLScheme:      urlScheme,
-		Plugins:        plugins,
+		TargetHeaders:   c.StringSlice("target-header"),
+		TargetParams:    c.StringSlice("target-param"),
+		FuzzDirectory:   c.Bool("dirbuster"),
+		TargetPathArgs:  targetPathArgs,
+		Wordlist:        wordlist,
+		Client:          client,
+		Seed:            seedRequest,
+		TargetDelimiter: delimiter,
+		Logger:          logger,
+		RequestDelay:    time.Duration(c.Int("delay-ms")) * time.Millisecond,
+		URLScheme:       urlScheme,
+		Plugins:         plugins,
 	}
 
 	fuzzer := &httpfuzz.Fuzzer{Config: config}

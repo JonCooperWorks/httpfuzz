@@ -52,6 +52,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 
 				req.Header.Set(header, payload)
+				req.RemoveDelimiters(f.TargetDelimiter)
 
 				requestQueue <- &Job{
 					Request:   req,
@@ -70,6 +71,8 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 
 				req.SetQueryParam(param, payload)
+				req.RemoveDelimiters(f.TargetDelimiter)
+
 				requestQueue <- &Job{
 					Request:   req,
 					FieldName: param,
@@ -87,6 +90,8 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 
 				req.SetURLPathArgument(arg, payload)
+				req.RemoveDelimiters(f.TargetDelimiter)
+
 				requestQueue <- &Job{
 					Request:   req,
 					FieldName: arg,
@@ -104,6 +109,8 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 
 				req.SetDirectoryRoot(payload)
+				req.RemoveDelimiters(f.TargetDelimiter)
+
 				requestQueue <- &Job{
 					Request:   req,
 					FieldName: directoryRootFieldName,
@@ -113,7 +120,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 			}
 
 			// Fuzz request body injection points
-			targetCount, err := f.Seed.BodyTargetCount(f.Client.TargetDelimiter)
+			targetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
 			if err != nil {
 				f.Logger.Printf("Error counting targets %v", err)
 				continue
@@ -126,11 +133,13 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 					continue
 				}
 
-				err = req.SetBodyPayloadAt(position, f.Client.TargetDelimiter, payload)
+				err = req.SetBodyPayloadAt(position, f.TargetDelimiter, payload)
 				if err != nil {
 					f.Logger.Printf("Error injecting payload into position %d: %v", position, err)
 					continue
 				}
+
+				req.RemoveDelimiters(f.TargetDelimiter)
 				requestQueue <- &Job{
 					Request:   req,
 					FieldName: string(position),
@@ -176,7 +185,7 @@ func (f *Fuzzer) RequestCount() (int, error) {
 		}
 	}
 
-	bodyTargetCount, err := f.Seed.BodyTargetCount(f.Client.TargetDelimiter)
+	bodyTargetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
 	if err != nil {
 		return 0, err
 	}
