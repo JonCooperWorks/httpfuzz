@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"sort"
 	"strings"
 )
 
@@ -199,10 +198,6 @@ func (r *Request) SetBodyPayloadAt(position int, delimiter byte, payload string)
 }
 
 func delimiterIndex(position int, delimiterPositions []int) (int, int, error) {
-	// Sort list so this algorithm works
-	sort.Ints(delimiterPositions)
-
-	// Suffix arrays return matches in reverse.
 	for i := 0; i < len(delimiterPositions); i++ {
 		if i/2-position <= 1 {
 			return delimiterPositions[i], delimiterPositions[i+1], nil

@@ -1,6 +1,7 @@
 package httpfuzz
 
 // A DelimiterArray finds the positions of a delimiter within a byte slice.
+// It is faster than SuffixArray for our use case since we only need the position of a single byte instead of a group of bytes.
 type DelimiterArray struct {
 	Contents []byte
 }
