@@ -60,5 +60,19 @@ Content-Length: 35
 }
 ```
 
-In the above example request file, we're fuzzing the ```name``` field.
-```httpfuzz``` will insert values from the wordlist into that field, along with any other fields specified with the CLI flags.
+```
+httpfuzz \
+   --wordlist testdata/useragents.txt \
+   --seed-request testdata/validPOST.request \
+   --target-header User-Agent \
+   --target-header Host \
+   --delay-ms 50 \
+   --target-header Pragma \
+   --skip-cert-verify \
+   --proxy-url http://localhost:8080 \
+   --target-param fuzz \
+   --https \
+   --dirbuster
+```
+
+In the above example, ```httpfuzz``` will insert values from the wordlist into the `name` field, the Pragma, User-Agent and Host headers, the end of the URL (like [dirbuster](https://tools.kali.org/web-applications/dirbuster#:~:text=DirBuster%20is%20a%20multi%20threaded,pages%20and%20applications%20hidden%20within.)) and the URL parameter `fuzz`.
