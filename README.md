@@ -41,7 +41,6 @@ GLOBAL OPTIONS:
 Seed requests are a text HTTP request.
 You can tag injection points in request bodies by surrounding them with the delimiter character specified at program startup with the ```--target-delimiter``` flag.
 By default, it's `` ` ``.
-You'll have to manually update the Content-Length in the header to match the number of delimiters you added.
 You can fuzz other parts of the request by with CLI flags.
 
 ### Examples
@@ -56,7 +55,7 @@ Postman-Token: c5bcc2bc-90b4-4d06-b851-1cc670cd9afa
 Host: myprivate.network
 Accept-Encoding: gzip, deflate
 Connection: close
-Content-Length: 37
+Content-Length: 35
 
 {
 	"name": "`S9`",

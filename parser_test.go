@@ -67,7 +67,7 @@ func TestPOSTRequestBodyParsedCorrectlyFromFile(t *testing.T) {
 	}
 
 	// Check for truncation bug
-	const expectedLength = 37
+	const expectedLength = 41
 	if len(body) != expectedLength {
 		t.Log(string(body))
 		t.Fatalf("Body is incorrect length, expected %d, got %d", expectedLength, len(body))
