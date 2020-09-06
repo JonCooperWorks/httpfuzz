@@ -212,12 +212,98 @@ func (r *Request) ReplaceMultipartFileData(fieldName string, file *File) error {
 	newBody := &bytes.Buffer{}
 
 	// Write from the old writer into the new one using the same boundary as the original request.
+	written := false
+	mw := multipart.NewWriter(newBody)
+	mw.SetBoundary(params["boundary"])
+	var chunk []byte
+	for {
+		defer mw.Close()
+		part, err := mr.NextPart()
+		if err == io.EOF {
+			if !written {
+				partWriter, err := mw.CreatePart(part.Header)
+				r.Request.ContentLength = r.ContentLength - (int64(len(chunk)) - file.Size)
+				_, err = partWriter.Write(file.Payload)
+				if err != nil {
+					return err
+				}
+			}
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		chunk, err = ioutil.ReadAll(part)
+		if err != nil {
+			return err
+		}
+
+		_, params, err := mime.ParseMediaType(part.Header.Get("Content-Disposition"))
+		if err != nil {
+			return err
+		}
+
+		// Copy part headers from the old request
+		if params["name"] == fieldName {
+			partWriter, err := mw.CreatePart(part.Header)
+			r.Request.ContentLength = r.ContentLength - (int64(len(chunk)) - file.Size)
+			_, err = partWriter.Write(file.Payload)
+			if err != nil {
+				return err
+			}
+			written = true
+		} else {
+			partWriter, err := mw.CreatePart(part.Header)
+			if err != nil {
+				return err
+			}
+
+			_, err = partWriter.Write(chunk)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	r.Body = ioutil.NopCloser(newBody)
+	return nil
+}
+
+// ReplaceMultipartField replaces a regular form field in a multipart request with a payload.
+// We do this because delimiters don't work with binary files.
+func (r *Request) ReplaceMultipartField(fieldName, payload string) error {
+	mediaType, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(mediaType, "multipart/") {
+		return fmt.Errorf("request is not a multipart request, got %s", mediaType)
+	}
+
+	mr := multipart.NewReader(r.Body, params["boundary"])
+	newBody := &bytes.Buffer{}
+
+	written := false
+
+	// Write from the old writer into the new one using the same boundary as the original request.
 	mw := multipart.NewWriter(newBody)
 	mw.SetBoundary(params["boundary"])
 	for {
 		defer mw.Close()
 		part, err := mr.NextPart()
 		if err == io.EOF {
+			if !written {
+				writer, err := mw.CreateFormField(fieldName)
+				if err != nil {
+					return err
+				}
+				_, err = writer.Write([]byte(payload))
+				if err != nil {
+					return err
+				}
+			}
 			break
 		}
 		if err != nil {
@@ -236,12 +322,16 @@ func (r *Request) ReplaceMultipartFileData(fieldName string, file *File) error {
 
 		// Copy part headers from the old request
 		if params["name"] == fieldName {
-			partWriter, err := mw.CreatePart(part.Header)
-			r.Request.ContentLength = r.ContentLength - (int64(len(chunk)) - file.Size)
-			_, err = partWriter.Write(file.Payload)
+			r.Request.ContentLength = r.ContentLength - (int64(len(chunk)) - int64(len(payload)))
+			writer, err := mw.CreateFormField(fieldName)
 			if err != nil {
 				return err
 			}
+			_, err = writer.Write([]byte(payload))
+			if err != nil {
+				return err
+			}
+			written = true
 		} else {
 			partWriter, err := mw.CreatePart(part.Header)
 			if err != nil {

@@ -276,3 +276,40 @@ func TestReplaceMultipartFileData(t *testing.T) {
 	}
 
 }
+
+func TestReplaceMultipartField(t *testing.T) {
+	const fileContents = "test file data"
+	const fileKey = "file"
+	body := &bytes.Buffer{}
+	multipartWriter := multipart.NewWriter(body)
+	part, err := multipartWriter.CreateFormFile(fileKey, "filename.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = io.Copy(part, strings.NewReader(fileContents))
+	if err != nil {
+		t.Fatal(err)
+	}
+	multipartWriter.Close()
+
+	req, _ := http.NewRequest("POST", "/test/path?param=test", body)
+	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
+	request := &Request{req}
+
+	expectedValue := "data"
+	err = request.ReplaceMultipartField("fieldName", expectedValue)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedContentLength := int64(258)
+	if request.ContentLength != expectedContentLength {
+		t.Fatalf("Expected %d, got %d", expectedContentLength, request.ContentLength)
+	}
+
+	actualValue := request.FormValue("fieldName")
+	if expectedValue != actualValue {
+		t.Fatalf("Expected %s, got %s", expectedValue, actualValue)
+	}
+}

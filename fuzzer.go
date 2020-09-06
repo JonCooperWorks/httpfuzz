@@ -119,32 +119,80 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 			}
 
-			// Fuzz request body injection points
-			targetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
-			if err != nil {
-				f.Logger.Printf("Error counting targets %v", err)
-				continue
-			}
+			// Prevent delimiter code from firing for multipart requests
+			if len(f.TargetFileKeys) > 0 || len(f.TargetMultipartFieldNames) > 0 {
+				for _, fileKey := range f.TargetFileKeys {
+					for _, fileType := range NativeSupportedFileTypes() {
+						req, err := f.Seed.CloneBody(context.Background())
+						if err != nil {
+							f.Logger.Printf("Error cloning request for multipart file target %v", err)
+							continue
+						}
 
-			for position := 0; position < targetCount; position++ {
-				req, err := f.Seed.CloneBody(context.Background())
+						file, err := GenerateFile(fileType, f.FuzzFileSize, "")
+						if err != nil {
+							f.Logger.Printf("Error generating file request for multipart %s file target %v", fileType, err)
+						}
+
+						req.ReplaceMultipartFileData(fileKey, file)
+						requestQueue <- &Job{
+							Request:   req,
+							FieldName: fileKey,
+							Location:  bodyLocation,
+							Payload:   fileType,
+						}
+					}
+				}
+
+				for _, fieldName := range f.TargetMultipartFieldNames {
+					req, err := f.Seed.CloneBody(context.Background())
+					if err != nil {
+						f.Logger.Printf("Error cloning request for multipart file target %v", err)
+						continue
+					}
+
+					err = req.ReplaceMultipartField(fieldName, payload)
+					if err != nil {
+						f.Logger.Printf("Error replacing field %s in multipart file target %v", fieldName, err)
+						continue
+					}
+
+					requestQueue <- &Job{
+						Request:   req,
+						FieldName: fieldName,
+						Location:  bodyLocation,
+						Payload:   payload,
+					}
+				}
+
+			} else {
+				// Fuzz request body injection points
+				targetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
 				if err != nil {
-					f.Logger.Printf("Error cloning request for body target %v", err)
+					f.Logger.Printf("Error counting targets %v", err)
 					continue
 				}
 
-				err = req.SetBodyPayloadAt(position, f.TargetDelimiter, payload)
-				if err != nil {
-					f.Logger.Printf("Error injecting payload into position %d: %v", position, err)
-					continue
-				}
+				for position := 0; position < targetCount; position++ {
+					req, err := f.Seed.CloneBody(context.Background())
+					if err != nil {
+						f.Logger.Printf("Error cloning request for body target %v", err)
+						continue
+					}
 
-				req.RemoveDelimiters(f.TargetDelimiter)
-				requestQueue <- &Job{
-					Request:   req,
-					FieldName: string(position),
-					Location:  bodyLocation,
-					Payload:   payload,
+					err = req.SetBodyPayloadAt(position, f.TargetDelimiter, payload)
+					if err != nil {
+						f.Logger.Printf("Error injecting payload into position %d: %v", position, err)
+						continue
+					}
+
+					req.RemoveDelimiters(f.TargetDelimiter)
+					requestQueue <- &Job{
+						Request:   req,
+						FieldName: string(position),
+						Location:  bodyLocation,
+						Payload:   payload,
+					}
 				}
 			}
 		}
@@ -185,23 +233,29 @@ func (f *Fuzzer) RequestCount() (int, error) {
 		}
 	}
 
-	bodyTargetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
-	if err != nil {
-		return 0, err
-	}
-
+	fileTargets := len(f.TargetFileKeys) * len(NativeSupportedFileTypes())
 	// # of requests = # of lines per file * number of targets
 	numRequests := (count * len(f.TargetHeaders)) +
 		(count * len(f.TargetParams)) +
 		(count * len(f.TargetPathArgs)) +
-		(count * bodyTargetCount)
+		len(f.TargetMultipartFieldNames)*count
+
+	if fileTargets > 0 {
+		numRequests = numRequests + (count * fileTargets)
+	} else {
+		bodyTargetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
+		if err != nil {
+			return 0, err
+		}
+		numRequests = numRequests + (count * bodyTargetCount)
+	}
 
 	if f.FuzzDirectory {
 		numRequests = numRequests + count
 	}
 
 	// Move back to the head of the file
-	_, err = f.Wordlist.Seek(0, io.SeekStart)
+	_, err := f.Wordlist.Seek(0, io.SeekStart)
 	if err != nil {
 		return numRequests, err
 	}
