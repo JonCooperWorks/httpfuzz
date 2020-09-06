@@ -3,7 +3,9 @@ package httpfuzz
 import (
 	"bytes"
 	"context"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"strings"
 	"testing"
@@ -224,4 +226,53 @@ func TestInjectPayloadUnbalancedDelimiters(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected error with imbalanced delimiters.")
 	}
+}
+
+func TestReplaceMultipartFileData(t *testing.T) {
+	const fileContents = "test file data"
+	const fileKey = "file"
+	body := &bytes.Buffer{}
+	multipartWriter := multipart.NewWriter(body)
+	part, err := multipartWriter.CreateFormFile(fileKey, "filename.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = io.Copy(part, strings.NewReader(fileContents))
+	if err != nil {
+		t.Fatal(err)
+	}
+	multipartWriter.Close()
+
+	req, _ := http.NewRequest("POST", "/test/path?param=test", body)
+	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
+	request := &Request{req}
+	expectedPayload := []byte("expected payload")
+	file := &File{
+		Name:     "newfile.txt",
+		Payload:  expectedPayload,
+		Size:     int64(len(expectedPayload)),
+		FileType: "txt",
+	}
+	err = request.ReplaceMultipartFileData(fileKey, file)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedContentLength := int64(260)
+	if request.ContentLength != expectedContentLength {
+		t.Fatalf("Expected %d, got %d", expectedContentLength, request.ContentLength)
+	}
+
+	updatedFile, _, err := request.FormFile(fileKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer updatedFile.Close()
+
+	actualPayload, _ := ioutil.ReadAll(updatedFile)
+	if !bytes.Equal(expectedPayload, actualPayload) {
+		t.Fatalf("unexpected file, expected %s, got %s", string(expectedPayload), string(actualPayload))
+	}
+
 }
