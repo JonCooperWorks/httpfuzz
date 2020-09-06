@@ -15,14 +15,6 @@ type File struct {
 	Payload  []byte
 }
 
-// FileHeader returns a header for a given file type.
-// If we don't have a registered header for that file type
-func FileHeader(fileType string) ([]byte, bool) {
-	// This map is defined in fileheaders.go
-	header, found := headerRegistry[fileType]
-	return header, found
-}
-
 // NativeSupportedFileTypes returns a list of file types httpfuzz can generate by default.
 func NativeSupportedFileTypes() []string {
 	keys := []string{}
@@ -34,7 +26,12 @@ func NativeSupportedFileTypes() []string {
 
 // GenerateFile creates valid files of a given type with zeroes in the body.
 // It is meant to fuzz files to test file upload.
-func GenerateFile(fileType string, header []byte, size int64, extraExtension string) *File {
+func GenerateFile(fileType string, size int64, extraExtension string) (*File, error) {
+	header, found := headerRegistry[fileType]
+	if !found {
+		return nil, fmt.Errorf("unsupported file type")
+	}
+
 	payload := make([]byte, size)
 	for index, char := range header {
 		payload[index] = char
@@ -50,7 +47,7 @@ func GenerateFile(fileType string, header []byte, size int64, extraExtension str
 		Header:   header,
 		Size:     size,
 		Payload:  payload,
-	}
+	}, nil
 }
 
 // FileFrom loads a file from the filesystem and wraps it in our native File type.

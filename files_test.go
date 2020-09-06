@@ -9,7 +9,10 @@ import (
 func TestGenerateFileDifferentFileTypes(t *testing.T) {
 	const expectedFileLength = int64(1024)
 	for fileType, header := range headerRegistry {
-		file := GenerateFile(fileType, header, expectedFileLength, "")
+		file, err := GenerateFile(fileType, expectedFileLength, "")
+		if err != nil {
+			t.Fatal(err)
+		}
 		fileBytes := file.Payload
 		actualFileLength := int64(len(fileBytes))
 		if actualFileLength != file.Size {
