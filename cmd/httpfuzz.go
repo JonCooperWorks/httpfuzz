@@ -90,29 +90,34 @@ func actionHTTPFuzz(c *cli.Context) error {
 
 	delimiter := []byte(c.String("target-delimiter"))[0]
 
-	// Validate that the request body is properly delimitered
-	_, err = seedRequest.BodyTargetCount(delimiter)
-	if err != nil {
-		return err
+	multipartFileKeys := c.StringSlice("multipart-file-name")
+	multipartFormFields := c.StringSlice("multipart-form-name")
+	if len(multipartFormFields) == 0 && len(multipartFileKeys) == 0 {
+		logger.Println(len(multipartFormFields) == 0)
+		// Validate that the request body is properly delimitered
+		_, err = seedRequest.BodyTargetCount(delimiter)
+		if err != nil {
+			return err
+		}
 	}
 
-	client := &httpfuzz.Client{
-		Client: httpClient,
-	}
-
+	client := &httpfuzz.Client{Client: httpClient}
 	config := &httpfuzz.Config{
-		TargetHeaders:   c.StringSlice("target-header"),
-		TargetParams:    c.StringSlice("target-param"),
-		FuzzDirectory:   c.Bool("dirbuster"),
-		TargetPathArgs:  targetPathArgs,
-		Wordlist:        wordlist,
-		Client:          client,
-		Seed:            seedRequest,
-		TargetDelimiter: delimiter,
-		Logger:          logger,
-		RequestDelay:    time.Duration(c.Int("delay-ms")) * time.Millisecond,
-		URLScheme:       urlScheme,
-		Plugins:         plugins,
+		TargetHeaders:             c.StringSlice("target-header"),
+		TargetParams:              c.StringSlice("target-param"),
+		FuzzDirectory:             c.Bool("dirbuster"),
+		FuzzFileSize:              c.Int64("fuzz-file-size"),
+		TargetFileKeys:            multipartFileKeys,
+		TargetMultipartFieldNames: multipartFormFields,
+		TargetPathArgs:            targetPathArgs,
+		Wordlist:                  wordlist,
+		Client:                    client,
+		Seed:                      seedRequest,
+		TargetDelimiter:           delimiter,
+		Logger:                    logger,
+		RequestDelay:              time.Duration(c.Int("delay-ms")) * time.Millisecond,
+		URLScheme:                 urlScheme,
+		Plugins:                   plugins,
 	}
 
 	fuzzer := &httpfuzz.Fuzzer{Config: config}
@@ -200,6 +205,19 @@ func main() {
 				Name:  "target-delimiter",
 				Usage: "delimiter to mark targets in request bodies",
 				Value: "`",
+			},
+			&cli.StringSliceFlag{
+				Name:  "multipart-file-name",
+				Usage: "name of the file field to fuzz in multipart request",
+			},
+			&cli.StringSliceFlag{
+				Name:  "multipart-form-name",
+				Usage: "name of the form field to fuzz in multipart request",
+			},
+			&cli.Int64Flag{
+				Name:  "fuzz-file-size",
+				Usage: "file size to fuzz in multipart request",
+				Value: int64(1024),
 			},
 		},
 	}

@@ -208,13 +208,14 @@ func (r *Request) ReplaceMultipartFileData(fieldName string, file *File) error {
 		return fmt.Errorf("request is not a multipart request, got %s", mediaType)
 	}
 
-	mr := multipart.NewReader(r.Body, params["boundary"])
+	boundary := params["boundary"]
+	mr := multipart.NewReader(r.Body, boundary)
 	newBody := &bytes.Buffer{}
 
 	// Write from the old writer into the new one using the same boundary as the original request.
 	written := false
 	mw := multipart.NewWriter(newBody)
-	mw.SetBoundary(params["boundary"])
+	mw.SetBoundary(boundary)
 	var chunk []byte
 	for {
 		defer mw.Close()
@@ -222,7 +223,6 @@ func (r *Request) ReplaceMultipartFileData(fieldName string, file *File) error {
 		if err == io.EOF {
 			if !written {
 				partWriter, err := mw.CreatePart(part.Header)
-				r.Request.ContentLength = r.ContentLength - (int64(len(chunk)) - file.Size)
 				_, err = partWriter.Write(file.Payload)
 				if err != nil {
 					return err
@@ -247,7 +247,6 @@ func (r *Request) ReplaceMultipartFileData(fieldName string, file *File) error {
 		// Copy part headers from the old request
 		if params["name"] == fieldName {
 			partWriter, err := mw.CreatePart(part.Header)
-			r.Request.ContentLength = r.ContentLength - (int64(len(chunk)) - file.Size)
 			_, err = partWriter.Write(file.Payload)
 			if err != nil {
 				return err
@@ -266,6 +265,8 @@ func (r *Request) ReplaceMultipartFileData(fieldName string, file *File) error {
 		}
 	}
 
+	r.ContentLength = int64(newBody.Len()) + 130
+	r.Header.Set("Content-Type", mw.FormDataContentType())
 	r.Body = ioutil.NopCloser(newBody)
 	return nil
 }
@@ -345,6 +346,8 @@ func (r *Request) ReplaceMultipartField(fieldName, payload string) error {
 		}
 	}
 
+	r.ContentLength = int64(newBody.Len()) + 130
+	r.Header.Set("Content-Type", mw.FormDataContentType())
 	r.Body = ioutil.NopCloser(newBody)
 	return nil
 }

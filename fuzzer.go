@@ -234,13 +234,14 @@ func (f *Fuzzer) RequestCount() (int, error) {
 	}
 
 	fileTargets := len(f.TargetFileKeys) * len(NativeSupportedFileTypes())
+	multipartFieldTargets := len(f.TargetMultipartFieldNames)
 	// # of requests = # of lines per file * number of targets
 	numRequests := (count * len(f.TargetHeaders)) +
 		(count * len(f.TargetParams)) +
 		(count * len(f.TargetPathArgs)) +
-		len(f.TargetMultipartFieldNames)*count
+		multipartFieldTargets*count
 
-	if fileTargets > 0 {
+	if fileTargets > 0 || multipartFieldTargets > 0 {
 		numRequests = numRequests + (count * fileTargets)
 	} else {
 		bodyTargetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
