@@ -136,6 +136,7 @@ httpfuzz \
 ```
 
 This command will fuzz a multipart form field called `field` and the file field `file` with randomly generated 4KB (4096 bytes) files.
+You can still fuzz the other injection points, but delimiter injection will not work, since binary files can contain any character they want.
 
 ### Building httpfuzz
 To build `httpfuzz`, simply run `go build -o httpfuzz cmd/httpfuzz.go`.
