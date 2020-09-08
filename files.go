@@ -1,6 +1,7 @@
 package httpfuzz
 
 import (
+	"crypto/rand"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -33,6 +34,13 @@ func GenerateFile(fileType string, size int64, extraExtension string) (*File, er
 	}
 
 	payload := make([]byte, size)
+
+	// fill the body with random bytes
+	_, err := rand.Read(payload)
+	if err != nil {
+		return nil, err
+	}
+
 	for index, char := range header {
 		payload[index] = char
 	}
