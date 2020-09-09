@@ -102,19 +102,26 @@ func actionHTTPFuzz(c *cli.Context) error {
 		}
 	}
 
-	payloadDirectory := c.String("payload-dir")
-	payloadFiles, err := ioutil.ReadDir(payloadDirectory)
-	if err != nil {
-		return err
-	}
 	payloads := []string{}
-	for _, fileInfo := range payloadFiles {
-		if fileInfo.IsDir() {
-			continue
+	payloadDirectory := c.String("payload-dir")
+	if payloadDirectory != "" {
+		payloadFiles, err := ioutil.ReadDir(payloadDirectory)
+		if err != nil {
+			return err
 		}
+		for _, fileInfo := range payloadFiles {
+			if fileInfo.IsDir() {
+				continue
+			}
 
-		payloadPath := filepath.Join(payloadDirectory, fileInfo.Name())
-		payloads = append(payloads, payloadPath)
+			payloadPath := filepath.Join(payloadDirectory, fileInfo.Name())
+			payloads = append(payloads, payloadPath)
+		}
+	}
+
+	generateFilePayloads := c.Bool("automatic-file-payloads")
+	if payloadDirectory == "" && !generateFilePayloads && len(multipartFormFields) > 0 {
+		logger.Printf("Warning: no file payloads have been specified")
 	}
 
 	client := &httpfuzz.Client{Client: httpClient}
@@ -123,7 +130,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 		TargetParams:              c.StringSlice("target-param"),
 		FuzzDirectory:             c.Bool("dirbuster"),
 		FuzzFileSize:              c.Int64("fuzz-file-size"),
-		EnableGeneratedPayloads:   c.Bool("automatic-file-payloads"),
+		EnableGeneratedPayloads:   generateFilePayloads,
 		TargetFileKeys:            multipartFileKeys,
 		TargetMultipartFieldNames: multipartFormFields,
 		FilesystemPayloads:        payloads,
