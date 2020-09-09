@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/joncooperworks/httpfuzz"
@@ -101,14 +102,31 @@ func actionHTTPFuzz(c *cli.Context) error {
 		}
 	}
 
+	payloadDirectory := c.String("payload-dir")
+	payloadFiles, err := ioutil.ReadDir(payloadDirectory)
+	if err != nil {
+		return err
+	}
+	payloads := []string{}
+	for _, fileInfo := range payloadFiles {
+		if fileInfo.IsDir() {
+			continue
+		}
+
+		payloadPath := filepath.Join(payloadDirectory, fileInfo.Name())
+		payloads = append(payloads, payloadPath)
+	}
+
 	client := &httpfuzz.Client{Client: httpClient}
 	config := &httpfuzz.Config{
 		TargetHeaders:             c.StringSlice("target-header"),
 		TargetParams:              c.StringSlice("target-param"),
 		FuzzDirectory:             c.Bool("dirbuster"),
 		FuzzFileSize:              c.Int64("fuzz-file-size"),
+		EnableGeneratedPayloads:   c.Bool("automatic-file-payloads"),
 		TargetFileKeys:            multipartFileKeys,
 		TargetMultipartFieldNames: multipartFormFields,
+		FilesystemPayloads:        payloads,
 		TargetPathArgs:            targetPathArgs,
 		Wordlist:                  wordlist,
 		Client:                    client,
@@ -218,6 +236,14 @@ func main() {
 				Name:  "fuzz-file-size",
 				Usage: "file size to fuzz in multipart request",
 				Value: int64(1024),
+			},
+			&cli.StringFlag{
+				Name:  "payload-dir",
+				Usage: "directory with payload files to attempt to upload using the fuzzer",
+			},
+			&cli.BoolFlag{
+				Name:  "automatic-file-payloads",
+				Usage: "enable this flag to automatically generate files for fuzzing",
 			},
 		},
 	}

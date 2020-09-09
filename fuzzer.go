@@ -37,9 +37,65 @@ type Fuzzer struct {
 func (f *Fuzzer) GenerateRequests() <-chan *Job {
 	requestQueue := make(chan *Job)
 
+	// TODO: refactor this into smaller methods and group common logic.
 	go func(requestQueue chan *Job) {
 		// Generate requests based on the combinations of the headers and URL paths.
 		scanner := bufio.NewScanner(f.Wordlist)
+
+		// Send the filesystem stuff independent of the payloads in the wordlist
+		for _, fileKey := range f.TargetFileKeys {
+			for _, filename := range f.FilesystemPayloads {
+				req, err := f.Seed.CloneBody(context.Background())
+				if err != nil {
+					f.Logger.Printf("Error cloning request for multipart file target %v", err)
+					continue
+				}
+
+				// Don't let reading potentially large files slow down generating requests.
+				go func(filename string, requestQueue chan *Job) {
+					// TODO: fuzz filenames and extensions ;).
+					file, err := FileFrom(filename, "")
+					if err != nil {
+						f.Logger.Printf("Error reading file %s from filesystem: %v", filename, err)
+						return
+					}
+
+					req.ReplaceMultipartFileData(fileKey, file)
+					requestQueue <- &Job{
+						Request:   req,
+						FieldName: fileKey,
+						Location:  bodyLocation,
+						Payload:   filename,
+					}
+
+				}(filename, requestQueue)
+			}
+
+			if f.EnableGeneratedPayloads {
+				for _, fileType := range NativeSupportedFileTypes() {
+					req, err := f.Seed.CloneBody(context.Background())
+					if err != nil {
+						f.Logger.Printf("Error cloning request for multipart file target %v", err)
+						continue
+					}
+
+					file, err := GenerateFile(fileType, f.FuzzFileSize, "")
+					if err != nil {
+						f.Logger.Printf("Error generating file request for multipart %s file target %v", fileType, err)
+					}
+
+					req.ReplaceMultipartFileData(fileKey, file)
+					requestQueue <- &Job{
+						Request:   req,
+						FieldName: fileKey,
+						Location:  bodyLocation,
+						Payload:   fileType,
+					}
+				}
+			}
+
+		}
+
 		for scanner.Scan() {
 			payload := scanner.Text()
 
@@ -120,30 +176,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 			}
 
 			// Prevent delimiter code from firing for multipart requests
-			if len(f.TargetFileKeys) > 0 || len(f.TargetMultipartFieldNames) > 0 {
-				for _, fileKey := range f.TargetFileKeys {
-					for _, fileType := range NativeSupportedFileTypes() {
-						req, err := f.Seed.CloneBody(context.Background())
-						if err != nil {
-							f.Logger.Printf("Error cloning request for multipart file target %v", err)
-							continue
-						}
-
-						file, err := GenerateFile(fileType, f.FuzzFileSize, "")
-						if err != nil {
-							f.Logger.Printf("Error generating file request for multipart %s file target %v", fileType, err)
-						}
-
-						req.ReplaceMultipartFileData(fileKey, file)
-						requestQueue <- &Job{
-							Request:   req,
-							FieldName: fileKey,
-							Location:  bodyLocation,
-							Payload:   fileType,
-						}
-					}
-				}
-
+			if len(f.TargetMultipartFieldNames) > 0 {
 				for _, fieldName := range f.TargetMultipartFieldNames {
 					req, err := f.Seed.CloneBody(context.Background())
 					if err != nil {
@@ -233,16 +266,19 @@ func (f *Fuzzer) RequestCount() (int, error) {
 		}
 	}
 
-	fileTargets := len(f.TargetFileKeys) * len(NativeSupportedFileTypes())
 	multipartFieldTargets := len(f.TargetMultipartFieldNames)
 	// # of requests = # of lines per file * number of targets
 	numRequests := (count * len(f.TargetHeaders)) +
 		(count * len(f.TargetParams)) +
 		(count * len(f.TargetPathArgs)) +
-		multipartFieldTargets*count
+		multipartFieldTargets*count +
+		len(f.FilesystemPayloads)
 
+	fileTargets := len(f.TargetFileKeys) * len(NativeSupportedFileTypes())
 	if fileTargets > 0 || multipartFieldTargets > 0 {
-		numRequests = numRequests + (count * fileTargets)
+		if f.EnableGeneratedPayloads {
+			numRequests = numRequests + fileTargets
+		}
 	} else {
 		bodyTargetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
 		if err != nil {

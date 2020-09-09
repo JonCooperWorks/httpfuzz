@@ -10,12 +10,13 @@ It can be used as a library, but is meant to be used with the included `httpfuzz
 It allows fuzzing of HTTP requests with text bodies and multipart file uploads.
 
 ### File Fuzzing
-`httpfuzz` can generate files to help you quickly test a file upload endpoints for file header whitelisting.
+`httpfuzz` can generate files to help you quickly test a file upload endpoints for file header whitelisting using the `--automatic-file-payloads` flag.
 It generates random bytes and puts a valid file headers on them before injecting them into the request body and sending them to the web service.
 This lets you easily see if a dev team is only using filenames to validate image uploads ;).
 You can see a list of the supported file types in [fileheaders.go](https://github.com/JonCooperWorks/httpfuzz/blob/master/fileheaders.go).
 Feel free to add any file types you see missing.
-Pull requests are welcomed.
+
+If you want to use `httpfuzz` with existing payloads, simply place them in a directory and pass it to the `payload-dir` flag.
 
 ## Using httpfuzz CLI
 ```
@@ -45,6 +46,8 @@ GLOBAL OPTIONS:
    --multipart-file-name value  name of the file field to fuzz in multipart request
    --multipart-form-name value  name of the form field to fuzz in multipart request
    --fuzz-file-size value       file size to fuzz in multipart request (default: 1024)
+   --payload-dir value          directory with payload files to attempt to upload using the fuzzer
+   --automatic-file-payloads    enable this flag to automatically generate files for fuzzing (default: false)
    --help, -h                   show help (default: false)
 ```
 
@@ -132,10 +135,12 @@ httpfuzz \
  --dirbuster \
  --fuzz-file-size 4096 \
  --multipart-form-name field \
- --multipart-file-name file 
+ --multipart-file-name file \
+ --automatic-file-payloads \
+ --payload-dir ./testpayloads
 ```
 
-This command will fuzz a multipart form field called `field` and the file field `file` with randomly generated 4KB (4096 bytes) files.
+This command will fuzz a multipart form field called `field` and the file field `file` with randomly generated 4KB (4096 bytes) files and any payloads in the `./testpayloads` directory.
 You can still fuzz the other injection points, but delimiter injection will not work, since binary files can contain any character they want.
 
 ### Building httpfuzz

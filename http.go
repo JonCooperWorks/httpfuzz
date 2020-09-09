@@ -138,7 +138,12 @@ func (r *Request) BodyTargetCount(delimiter byte) (int, error) {
 
 // RemoveDelimiters removes all target delimiters from a request so it can be sent to the server and interpreted properly.
 func (r *Request) RemoveDelimiters(delimiter byte) error {
-	if r.Body == nil {
+	if r.Body == nil || r.ContentLength == 0 {
+		return nil
+	}
+
+	// Prevent accidentally mangling multipart requests
+	if strings.Contains(r.Header.Get("Content-Type"), "multipart") {
 		return nil
 	}
 

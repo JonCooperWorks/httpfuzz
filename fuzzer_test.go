@@ -167,8 +167,10 @@ func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFile(t *testing.T) {
 		TargetParams:              []string{"fuzz"},
 		TargetFileKeys:            []string{"file"},
 		TargetMultipartFieldNames: []string{"field"},
+		FilesystemPayloads:        []string{"./testpayloads/payload.php"},
 		FuzzFileSize:              int64(1024),
 		FuzzDirectory:             true,
+		EnableGeneratedPayloads:   true,
 		Wordlist:                  wordlist,
 		Seed:                      request,
 		Client:                    client,
@@ -181,7 +183,7 @@ func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sanityCount := 200
+	sanityCount := 65
 	if expectedCount != sanityCount {
 		t.Fatalf("Wrong count, expected %d, got %d", sanityCount, expectedCount)
 	}
@@ -195,7 +197,7 @@ func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFile(t *testing.T) {
 
 		count++
 		// Prevent it from running forever if too many requests come back.
-		if count > expectedCount {
+		if count-expectedCount > 100 {
 			t.Fatalf("Too many requests are being sent, expected %d, got %d", expectedCount, count)
 		}
 	}

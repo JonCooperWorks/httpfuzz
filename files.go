@@ -73,27 +73,3 @@ func FileFrom(path string, extraExtension string) (*File, error) {
 		Payload:  fileBytes,
 	}, nil
 }
-
-// FilesFromDirectory returns a list of Files in a directory.
-func FilesFromDirectory(directory, extraExtension string) ([]*File, error) {
-	fileInfos, err := ioutil.ReadDir(directory)
-	files := []*File{}
-	if err != nil {
-		return files, err
-	}
-
-	for _, fileInfo := range fileInfos {
-		if fileInfo.IsDir() {
-			continue
-		}
-
-		file, err := FileFrom(filepath.Join(directory, fileInfo.Name()), extraExtension)
-		if err != nil {
-			return files, err
-		}
-
-		files = append(files, file)
-	}
-
-	return files, nil
-}

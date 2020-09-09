@@ -14,6 +14,8 @@ type Config struct {
 	TargetPathArgs            []string
 	TargetFileKeys            []string
 	TargetMultipartFieldNames []string
+	FilesystemPayloads        []string
+	EnableGeneratedPayloads   bool
 	FuzzFileSize              int64
 	FuzzDirectory             bool
 	Wordlist                  *os.File

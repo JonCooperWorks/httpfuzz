@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/http/httputil"
 	"strings"
 	"testing"
 )
@@ -259,9 +260,11 @@ func TestReplaceMultipartFileData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedContentLength := int64(260)
+	expectedContentLength := int64(322)
 	if request.ContentLength != expectedContentLength {
-		t.Fatalf("Expected %d, got %d", expectedContentLength, request.ContentLength)
+		debug, _ := httputil.DumpRequest(request.Request, true)
+		t.Errorf("Expected %d, got %d", expectedContentLength, request.ContentLength)
+		t.Fatalf(string(debug))
 	}
 
 	updatedFile, _, err := request.FormFile(fileKey)
@@ -303,7 +306,7 @@ func TestReplaceMultipartField(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedContentLength := int64(258)
+	expectedContentLength := int64(442)
 	if request.ContentLength != expectedContentLength {
 		t.Fatalf("Expected %d, got %d", expectedContentLength, request.ContentLength)
 	}
@@ -311,5 +314,35 @@ func TestReplaceMultipartField(t *testing.T) {
 	actualValue := request.FormValue("fieldName")
 	if expectedValue != actualValue {
 		t.Fatalf("Expected %s, got %s", expectedValue, actualValue)
+	}
+}
+
+func TestRemoveDelimitersDoesNotOperateOnMultipartRequests(t *testing.T) {
+	const fileContents = "``````````````````a"
+	const fileKey = "file"
+	body := &bytes.Buffer{}
+	multipartWriter := multipart.NewWriter(body)
+	part, err := multipartWriter.CreateFormFile(fileKey, "filename.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = io.Copy(part, strings.NewReader(fileContents))
+	if err != nil {
+		t.Fatal(err)
+	}
+	multipartWriter.Close()
+
+	req, _ := http.NewRequest("POST", "/test/path?param=test", body)
+	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
+	request := &Request{req}
+	err = request.RemoveDelimiters(byte('`'))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actualPayload, _ := ioutil.ReadAll(request.Body)
+	if !bytes.Contains(actualPayload, []byte{byte('`')}) {
+		t.Fatalf("unexpected file, expected %s, got %s", fileContents, string(actualPayload))
 	}
 }
