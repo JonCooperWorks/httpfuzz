@@ -264,6 +264,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 
 // RequestCount calculates the total number of requests that will be sent given a set of input and the fields to be fuzzed using combinatorials.
 // This will be slower the larger the input file.
+// It is imperative that this count matches the number of requests created by GenerateRequest, otherwise httpfuzz will wait forever on requests that aren't coming or exit before all requests are processed.
 func (f *Fuzzer) RequestCount() (int, error) {
 	count := 1
 	const lineBreak = '\n'
