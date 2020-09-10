@@ -60,7 +60,10 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 						return
 					}
 
-					req.ReplaceMultipartFileData(fileKey, file)
+					err = req.ReplaceMultipartFileData(fileKey, file)
+					if err != nil {
+						f.Logger.Printf("Error replacing file payload %s from filesystem: %v", filename, err)
+					}
 					requestQueue <- &Job{
 						Request:   req,
 						FieldName: fileKey,
@@ -108,7 +111,11 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 
 				req.Header.Set(header, payload)
-				req.RemoveDelimiters(f.TargetDelimiter)
+				err = req.RemoveDelimiters(f.TargetDelimiter)
+				if err != nil {
+					f.Logger.Printf("Error removing delimiters: %v", err)
+					continue
+				}
 
 				requestQueue <- &Job{
 					Request:   req,
@@ -127,7 +134,11 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 
 				req.SetQueryParam(param, payload)
-				req.RemoveDelimiters(f.TargetDelimiter)
+				err = req.RemoveDelimiters(f.TargetDelimiter)
+				if err != nil {
+					f.Logger.Printf("Error removing delimiters: %v", err)
+					continue
+				}
 
 				requestQueue <- &Job{
 					Request:   req,
@@ -146,7 +157,11 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 
 				req.SetURLPathArgument(arg, payload)
-				req.RemoveDelimiters(f.TargetDelimiter)
+				err = req.RemoveDelimiters(f.TargetDelimiter)
+				if err != nil {
+					f.Logger.Printf("Error removing delimiters: %v", err)
+					continue
+				}
 
 				requestQueue <- &Job{
 					Request:   req,
@@ -165,7 +180,11 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 				}
 
 				req.SetDirectoryRoot(payload)
-				req.RemoveDelimiters(f.TargetDelimiter)
+				err = req.RemoveDelimiters(f.TargetDelimiter)
+				if err != nil {
+					f.Logger.Printf("Error removing delimiters: %v", err)
+					continue
+				}
 
 				requestQueue <- &Job{
 					Request:   req,
@@ -219,7 +238,12 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 						continue
 					}
 
-					req.RemoveDelimiters(f.TargetDelimiter)
+					err = req.RemoveDelimiters(f.TargetDelimiter)
+					if err != nil {
+						f.Logger.Printf("Error removing delimiters: %v", err)
+						continue
+					}
+
 					requestQueue <- &Job{
 						Request:   req,
 						FieldName: string(position),
