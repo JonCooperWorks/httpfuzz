@@ -298,7 +298,7 @@ func (f *Fuzzer) RequestCount() (int, error) {
 		(count * len(f.TargetParams)) +
 		(count * len(f.TargetPathArgs)) +
 		multipartFieldTargets*count +
-		len(f.FilesystemPayloads)
+		len(f.FilesystemPayloads)*len(f.TargetFileKeys)
 
 	fileTargets := len(f.TargetFileKeys) * len(NativeSupportedFileTypes())
 	if fileTargets > 0 || multipartFieldTargets > 0 {
