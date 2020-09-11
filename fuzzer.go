@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"time"
 )
@@ -246,7 +247,7 @@ func (f *Fuzzer) GenerateRequests() <-chan *Job {
 
 					requestQueue <- &Job{
 						Request:   req,
-						FieldName: string(position),
+						FieldName: fmt.Sprintf("%d", position),
 						Location:  bodyLocation,
 						Payload:   payload,
 					}
