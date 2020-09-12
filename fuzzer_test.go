@@ -219,7 +219,7 @@ func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFileWithoutGeneratedB
 		TargetParams:              []string{"fuzz"},
 		TargetFileKeys:            []string{"file"},
 		TargetMultipartFieldNames: []string{"field"},
-		FilesystemPayloads:        []string{"./testpayloads/payload.php"},
+		FilesystemPayloads:        []string{"./testpayloads/payload.php", "./testpayloads/imagetragic.jpg"},
 		FuzzFileSize:              int64(1024),
 		FuzzDirectory:             true,
 		EnableGeneratedPayloads:   false,
@@ -235,7 +235,7 @@ func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFileWithoutGeneratedB
 		t.Fatal(err)
 	}
 
-	sanityCount := 31
+	sanityCount := 32
 	if expectedCount != sanityCount {
 		t.Fatalf("Wrong count, expected %d, got %d", sanityCount, expectedCount)
 	}
