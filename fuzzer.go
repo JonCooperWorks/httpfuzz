@@ -48,12 +48,7 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, chan error) {
 				return
 			}
 
-			req, err := f.Seed.CloneBody(context.Background())
-			if err != nil {
-				errors <- err
-				return
-			}
-
+			req := f.Seed
 			state := &fuzzerState{
 				PayloadFile: file,
 				Seed:        req,
