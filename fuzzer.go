@@ -32,235 +32,291 @@ type Fuzzer struct {
 	*Config
 }
 
+// fuzzerState represents the work to be done by a requestFuzzer at any given time.
+type fuzzerState struct {
+	Seed                *Request
+	PayloadWord         string
+	PayloadFile         *File
+	BodyTargetDelimiter byte
+}
+
+// requestFuzzer is a function that takes the state of the fuzzer and sends requests down to the executor based on that, or errors if something went wrong.
+// RequestFuzzers should copy the seed request in state before operating on it.
+type requestFuzzer func(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error)
+
+// fuzzFiles applies a file to every file key we're targeting in the seed request
+func fuzzFiles(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+	for _, fileKey := range targets {
+		req, err := state.Seed.CloneBody(context.Background())
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		go func(state *fuzzerState, fileKey string, jobs chan<- *Job, errors chan<- error) {
+			if state.PayloadFile == nil {
+				panic("nil file should never be passed to fuzzFiles")
+			}
+
+			file := state.PayloadFile
+			err = req.ReplaceMultipartFileData(fileKey, file)
+			if err != nil {
+				errors <- err
+				return
+			}
+
+			jobs <- &Job{
+				Request:   req,
+				FieldName: fileKey,
+				Location:  bodyLocation,
+				Payload:   file.Name,
+			}
+		}(state, fileKey, jobs, errors)
+	}
+}
+
+// fuzzHeaders applies a payload word to every target header in the seed request
+func fuzzHeaders(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+	for _, header := range targets {
+		req, err := state.Seed.CloneBody(context.Background())
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		req.Header.Set(header, state.PayloadWord)
+		err = req.RemoveDelimiters(state.BodyTargetDelimiter)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		jobs <- &Job{
+			Request:   req,
+			FieldName: header,
+			Location:  headerLocation,
+			Payload:   state.PayloadWord,
+		}
+	}
+}
+
+func fuzzURLPathArgs(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+	for _, arg := range targets {
+		req, err := state.Seed.CloneBody(context.Background())
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		req.SetURLPathArgument(arg, state.PayloadWord)
+		err = req.RemoveDelimiters(state.BodyTargetDelimiter)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		jobs <- &Job{
+			Request:   req,
+			FieldName: arg,
+			Location:  urlPathArgLocation,
+			Payload:   state.PayloadWord,
+		}
+	}
+}
+
+func fuzzDirectoryRoot(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+	req, err := state.Seed.CloneBody(context.Background())
+	if err != nil {
+		errors <- err
+		return
+	}
+
+	req.SetDirectoryRoot(state.PayloadWord)
+	err = req.RemoveDelimiters(state.BodyTargetDelimiter)
+	if err != nil {
+		errors <- err
+		return
+	}
+
+	jobs <- &Job{
+		Request:   req,
+		FieldName: directoryRootFieldName,
+		Location:  directoryRootLocation,
+		Payload:   state.PayloadWord,
+	}
+}
+
+func fuzzURLParams(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+	for _, param := range targets {
+		req, err := state.Seed.CloneBody(context.Background())
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		req.SetQueryParam(param, state.PayloadWord)
+		err = req.RemoveDelimiters(state.BodyTargetDelimiter)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		jobs <- &Job{
+			Request:   req,
+			FieldName: param,
+			Location:  urlParamLocation,
+			Payload:   state.PayloadWord,
+		}
+	}
+}
+func fuzzMultipartFormField(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+	for _, fieldName := range targets {
+		req, err := state.Seed.CloneBody(context.Background())
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		err = req.ReplaceMultipartField(fieldName, state.PayloadWord)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		jobs <- &Job{
+			Request:   req,
+			FieldName: fieldName,
+			Location:  bodyLocation,
+			Payload:   state.PayloadWord,
+		}
+	}
+}
+
+func fuzzTextBodyWithDelimiters(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+	// Fuzz request body injection points
+	targetCount, err := state.Seed.BodyTargetCount(state.BodyTargetDelimiter)
+	if err != nil {
+		errors <- err
+		return
+	}
+
+	for position := 0; position < targetCount; position++ {
+		req, err := state.Seed.CloneBody(context.Background())
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		err = req.SetBodyPayloadAt(position, state.BodyTargetDelimiter, state.PayloadWord)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		err = req.RemoveDelimiters(state.BodyTargetDelimiter)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		jobs <- &Job{
+			Request:   req,
+			FieldName: fmt.Sprintf("%d", position),
+			Location:  bodyLocation,
+			Payload:   state.PayloadWord,
+		}
+	}
+}
+
 // GenerateRequests begins generating HTTP requests based on the seed request and sends them into the returned channel.
 // It streams the wordlist from the filesystem line-by-line so it can handle wordlists in constant time.
 // The trade-off is that callers cannot know ahead of time how many requests will be sent.
-func (f *Fuzzer) GenerateRequests() <-chan *Job {
-	requestQueue := make(chan *Job)
+func (f *Fuzzer) GenerateRequests() (<-chan *Job, chan error) {
+	jobs := make(chan *Job)
+	errors := make(chan error)
 
-	// TODO: refactor this into smaller methods and group common logic.
-	go func(requestQueue chan *Job) {
-		// Generate requests based on the combinations of the headers and URL paths.
-		scanner := bufio.NewScanner(f.Wordlist)
+	go func(jobs chan *Job, errors chan error) {
 
 		// Send the filesystem stuff independent of the payloads in the wordlist
-		for _, fileKey := range f.TargetFileKeys {
-			for _, filename := range f.FilesystemPayloads {
-				req, err := f.Seed.CloneBody(context.Background())
-				if err != nil {
-					f.Logger.Printf("Error cloning request for multipart file target %v", err)
-					continue
-				}
-
-				// Don't let reading potentially large files slow down generating requests.
-				go func(filename string, requestQueue chan *Job) {
-					// TODO: fuzz filenames and extensions ;).
-					file, err := FileFrom(filename, "")
-					if err != nil {
-						f.Logger.Printf("Error reading file %s from filesystem: %v", filename, err)
-						return
-					}
-
-					err = req.ReplaceMultipartFileData(fileKey, file)
-					if err != nil {
-						f.Logger.Printf("Error replacing file payload %s from filesystem: %v", filename, err)
-					}
-					requestQueue <- &Job{
-						Request:   req,
-						FieldName: fileKey,
-						Location:  bodyLocation,
-						Payload:   filename,
-					}
-
-				}(filename, requestQueue)
+		for _, filename := range f.FilesystemPayloads {
+			file, err := FileFrom(filename, "")
+			if err != nil {
+				errors <- err
+				return
 			}
 
-			if f.EnableGeneratedPayloads {
-				for _, fileType := range NativeSupportedFileTypes() {
-					req, err := f.Seed.CloneBody(context.Background())
-					if err != nil {
-						f.Logger.Printf("Error cloning request for multipart file target %v", err)
-						continue
-					}
-
-					file, err := GenerateFile(fileType, f.FuzzFileSize, "")
-					if err != nil {
-						f.Logger.Printf("Error generating file request for multipart %s file target %v", fileType, err)
-					}
-
-					req.ReplaceMultipartFileData(fileKey, file)
-					requestQueue <- &Job{
-						Request:   req,
-						FieldName: fileKey,
-						Location:  bodyLocation,
-						Payload:   fileType,
-					}
-				}
+			req, err := f.Seed.CloneBody(context.Background())
+			if err != nil {
+				errors <- err
+				return
 			}
+
+			state := &fuzzerState{
+				PayloadFile: file,
+				Seed:        req,
+			}
+
+			fuzzFiles(state, f.TargetFileKeys, jobs, errors)
 
 		}
 
+		if f.EnableGeneratedPayloads {
+			for _, fileType := range NativeSupportedFileTypes() {
+				req, err := f.Seed.CloneBody(context.Background())
+				if err != nil {
+					errors <- err
+					return
+				}
+
+				file, err := GenerateFile(fileType, f.FuzzFileSize, "")
+				if err != nil {
+					errors <- err
+					return
+				}
+
+				state := &fuzzerState{
+					PayloadFile: file,
+					Seed:        req,
+				}
+
+				fuzzFiles(state, f.TargetFileKeys, jobs, errors)
+			}
+		}
+
+		// Generate requests based on the combinations of the headers and URL paths.
+		scanner := bufio.NewScanner(f.Wordlist)
 		for scanner.Scan() {
 			payload := scanner.Text()
 
-			// Send requests with each of the headers in the request.
-			for _, header := range f.TargetHeaders {
-				req, err := f.Seed.CloneBody(context.Background())
-				if err != nil {
-					f.Logger.Printf("Error cloning request for header %s: %v", header, err)
-					continue
-				}
-
-				req.Header.Set(header, payload)
-				err = req.RemoveDelimiters(f.TargetDelimiter)
-				if err != nil {
-					f.Logger.Printf("Error removing delimiters: %v", err)
-					continue
-				}
-
-				requestQueue <- &Job{
-					Request:   req,
-					FieldName: header,
-					Location:  headerLocation,
-					Payload:   payload,
-				}
+			state := &fuzzerState{
+				PayloadWord:         payload,
+				Seed:                f.Seed,
+				BodyTargetDelimiter: f.TargetDelimiter,
 			}
+			fuzzHeaders(state, f.TargetHeaders, jobs, errors)
+			fuzzURLParams(state, f.TargetParams, jobs, errors)
+			fuzzURLPathArgs(state, f.TargetPathArgs, jobs, errors)
 
-			// Fuzz URL query params
-			for _, param := range f.TargetParams {
-				req, err := f.Seed.CloneBody(context.Background())
-				if err != nil {
-					f.Logger.Printf("Error cloning request for param %s: %v", param, err)
-					continue
-				}
-
-				req.SetQueryParam(param, payload)
-				err = req.RemoveDelimiters(f.TargetDelimiter)
-				if err != nil {
-					f.Logger.Printf("Error removing delimiters: %v", err)
-					continue
-				}
-
-				requestQueue <- &Job{
-					Request:   req,
-					FieldName: param,
-					Location:  urlParamLocation,
-					Payload:   payload,
-				}
-			}
-
-			// Fuzz URL path args
-			for _, arg := range f.TargetPathArgs {
-				req, err := f.Seed.CloneBody(context.Background())
-				if err != nil {
-					f.Logger.Printf("Error cloning request for param %s: %v", arg, err)
-					continue
-				}
-
-				req.SetURLPathArgument(arg, payload)
-				err = req.RemoveDelimiters(f.TargetDelimiter)
-				if err != nil {
-					f.Logger.Printf("Error removing delimiters: %v", err)
-					continue
-				}
-
-				requestQueue <- &Job{
-					Request:   req,
-					FieldName: arg,
-					Location:  urlPathArgLocation,
-					Payload:   payload,
-				}
-			}
-
-			// Fuzz for directory and file names like dirbuster.
 			if f.FuzzDirectory {
-				req, err := f.Seed.CloneBody(context.Background())
-				if err != nil {
-					f.Logger.Printf("Error cloning request for directory root %v", err)
-					continue
-				}
-
-				req.SetDirectoryRoot(payload)
-				err = req.RemoveDelimiters(f.TargetDelimiter)
-				if err != nil {
-					f.Logger.Printf("Error removing delimiters: %v", err)
-					continue
-				}
-
-				requestQueue <- &Job{
-					Request:   req,
-					FieldName: directoryRootFieldName,
-					Location:  directoryRootLocation,
-					Payload:   payload,
-				}
+				fuzzDirectoryRoot(state, []string{}, jobs, errors)
 			}
 
 			// Prevent delimiter code from firing for multipart requests
-			if len(f.TargetMultipartFieldNames) > 0 {
-				for _, fieldName := range f.TargetMultipartFieldNames {
-					req, err := f.Seed.CloneBody(context.Background())
-					if err != nil {
-						f.Logger.Printf("Error cloning request for multipart file target %v", err)
-						continue
-					}
-
-					err = req.ReplaceMultipartField(fieldName, payload)
-					if err != nil {
-						f.Logger.Printf("Error replacing field %s in multipart file target %v", fieldName, err)
-						continue
-					}
-
-					requestQueue <- &Job{
-						Request:   req,
-						FieldName: fieldName,
-						Location:  bodyLocation,
-						Payload:   payload,
-					}
-				}
-
+			if f.Seed.IsMultipartForm() {
+				fuzzMultipartFormField(state, f.TargetMultipartFieldNames, jobs, errors)
 			} else {
-				// Fuzz request body injection points
-				targetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
-				if err != nil {
-					f.Logger.Printf("Error counting targets %v", err)
-					continue
-				}
-
-				for position := 0; position < targetCount; position++ {
-					req, err := f.Seed.CloneBody(context.Background())
-					if err != nil {
-						f.Logger.Printf("Error cloning request for body target %v", err)
-						continue
-					}
-
-					err = req.SetBodyPayloadAt(position, f.TargetDelimiter, payload)
-					if err != nil {
-						f.Logger.Printf("Error injecting payload into position %d: %v", position, err)
-						continue
-					}
-
-					err = req.RemoveDelimiters(f.TargetDelimiter)
-					if err != nil {
-						f.Logger.Printf("Error removing delimiters: %v", err)
-						continue
-					}
-
-					requestQueue <- &Job{
-						Request:   req,
-						FieldName: fmt.Sprintf("%d", position),
-						Location:  bodyLocation,
-						Payload:   payload,
-					}
-				}
+				fuzzTextBodyWithDelimiters(state, []string{}, jobs, errors)
 			}
+
 		}
 
 		// Signal to consumer that we're done
-		close(requestQueue)
+		close(jobs)
+		close(errors)
 
-	}(requestQueue)
+	}(jobs, errors)
 
-	return requestQueue
+	return jobs, errors
 }
 
 // RequestCount calculates the total number of requests that will be sent given a set of input and the fields to be fuzzed using combinatorials.
@@ -327,8 +383,8 @@ func (f *Fuzzer) RequestCount() (int, error) {
 }
 
 // ProcessRequests executes HTTP requests in as they're received over the channel.
-func (f *Fuzzer) ProcessRequests(requestQueue <-chan *Job) {
-	for job := range requestQueue {
+func (f *Fuzzer) ProcessRequests(jobs <-chan *Job) {
+	for job := range jobs {
 		go f.requestWorker(job)
 
 		// If there's no delay, it'll return immediately, so we don't need to waste time checking.

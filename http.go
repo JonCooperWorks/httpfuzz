@@ -30,6 +30,16 @@ type Request struct {
 	*http.Request
 }
 
+// IsMultipartForm returns true if this is a multipart request.
+func (r *Request) IsMultipartForm() bool {
+	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil {
+		return false
+	}
+
+	return strings.HasPrefix(mediaType, "multipart/")
+}
+
 // CloneBody makes a copy of a request, including its body, while leaving the original body intact.
 func (r *Request) CloneBody(ctx context.Context) (*Request, error) {
 	req := &Request{Request: r.Request.Clone(ctx)}
@@ -143,7 +153,7 @@ func (r *Request) RemoveDelimiters(delimiter byte) error {
 	}
 
 	// Prevent accidentally mangling multipart requests
-	if strings.Contains(r.Header.Get("Content-Type"), "multipart") {
+	if r.IsMultipartForm() {
 		return nil
 	}
 
@@ -209,7 +219,7 @@ func (r *Request) ReplaceMultipartFileData(fieldName string, file *File) error {
 		return err
 	}
 
-	if !strings.HasPrefix(mediaType, "multipart/") {
+	if !r.IsMultipartForm() {
 		return fmt.Errorf("request is not a multipart request, got %s", mediaType)
 	}
 
@@ -284,7 +294,7 @@ func (r *Request) ReplaceMultipartField(fieldName, payload string) error {
 		return err
 	}
 
-	if !strings.HasPrefix(mediaType, "multipart/") {
+	if !r.IsMultipartForm() {
 		return fmt.Errorf("request is not a multipart request, got %s", mediaType)
 	}
 

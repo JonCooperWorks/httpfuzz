@@ -81,7 +81,7 @@ func TestFuzzerGeneratesExpectedNumberOfRequests(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	requests := fuzzer.GenerateRequests()
+	requests, _ := fuzzer.GenerateRequests()
 	count := 0
 	for job := range requests {
 		// A nil request represents the end of stream.
@@ -136,7 +136,7 @@ func TestFuzzerGeneratesCorrectRequestsRequestBody(t *testing.T) {
 		t.Fatalf("Wrong count, expected %d, got %d", sanityCount, expectedCount)
 	}
 
-	requests := fuzzer.GenerateRequests()
+	requests, _ := fuzzer.GenerateRequests()
 	count := 0
 	for job := range requests {
 		if job.Request == nil {
@@ -188,7 +188,7 @@ func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFile(t *testing.T) {
 		t.Fatalf("Wrong count, expected %d, got %d", sanityCount, expectedCount)
 	}
 
-	requests := fuzzer.GenerateRequests()
+	requests, _ := fuzzer.GenerateRequests()
 	count := 0
 	for job := range requests {
 		if job.Request == nil {
@@ -240,7 +240,7 @@ func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFileWithoutGeneratedB
 		t.Fatalf("Wrong count, expected %d, got %d", sanityCount, expectedCount)
 	}
 
-	requests := fuzzer.GenerateRequests()
+	requests, _ := fuzzer.GenerateRequests()
 	count := 0
 	for job := range requests {
 		if job.Request == nil {

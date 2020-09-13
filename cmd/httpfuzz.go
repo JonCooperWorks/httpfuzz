@@ -155,7 +155,17 @@ func actionHTTPFuzz(c *cli.Context) error {
 
 	if !c.Bool("count-only") {
 		fuzzer.WaitFor(requestCount)
-		requests := fuzzer.GenerateRequests()
+		requests, errors := fuzzer.GenerateRequests()
+		// Listen for errors generating requests in the background so we don't block forever waiting on requests that never come.
+		go func(errors chan error, logger *log.Logger) {
+			select {
+			case err := <-errors:
+				if err != nil {
+					logger.Fatal(err)
+				}
+			}
+		}(errors, logger)
+
 		fuzzer.ProcessRequests(requests)
 		logger.Printf("Finished.")
 	}
