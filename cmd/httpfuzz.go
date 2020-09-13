@@ -93,8 +93,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 
 	multipartFileKeys := c.StringSlice("multipart-file-name")
 	multipartFormFields := c.StringSlice("multipart-form-name")
-	if len(multipartFormFields) == 0 && len(multipartFileKeys) == 0 {
-		logger.Println(len(multipartFormFields) == 0)
+	if !seedRequest.IsMultipartForm() {
 		// Validate that the request body is properly delimitered
 		_, err = seedRequest.BodyTargetCount(delimiter)
 		if err != nil {
