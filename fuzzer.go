@@ -99,15 +99,16 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, chan error) {
 			fuzzURLParams(state, f.TargetParams, jobs, errors)
 			fuzzURLPathArgs(state, f.TargetPathArgs, jobs, errors)
 
+			empty := []string{}
 			if f.FuzzDirectory {
-				fuzzDirectoryRoot(state, []string{}, jobs, errors)
+				fuzzDirectoryRoot(state, empty, jobs, errors)
 			}
 
 			// Prevent delimiter code from firing for multipart requests
 			if f.Seed.IsMultipartForm() {
 				fuzzMultipartFormField(state, f.TargetMultipartFieldNames, jobs, errors)
 			} else {
-				fuzzTextBodyWithDelimiters(state, []string{}, jobs, errors)
+				fuzzTextBodyWithDelimiters(state, empty, jobs, errors)
 			}
 		}
 
