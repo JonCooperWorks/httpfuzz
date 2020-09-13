@@ -54,7 +54,7 @@ GLOBAL OPTIONS:
 Seed requests are a text HTTP request.
 You can tag injection points in request bodies by surrounding them with the delimiter character specified at program startup with the `--target-delimiter` flag.
 By default, it's `` ` ``.
-You can fuzz other parts of the request by with CLI flags.
+You can fuzz other parts of the request with CLI flags.
 
 ### Examples
 

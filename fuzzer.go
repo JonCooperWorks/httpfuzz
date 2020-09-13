@@ -26,7 +26,7 @@ type Job struct {
 }
 
 // Fuzzer creates HTTP requests from a seed request using the combination of inputs specified in the config.
-// It uses the producer-consumer pattern efficiently handle large wordlists.
+// It uses the producer-consumer pattern to efficiently handle large wordlists.
 type Fuzzer struct {
 	*Config
 }
@@ -40,7 +40,7 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, chan error) {
 
 	go func(jobs chan *Job, errors chan error) {
 
-		// Send the filesystem stuff independent of the payloads in the wordlist
+		// Send the file upload stuff independent of the payloads in the wordlist
 		for _, filename := range f.FilesystemPayloads {
 			file, err := FileFrom(filename, "")
 			if err != nil {
@@ -60,7 +60,6 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, chan error) {
 			}
 
 			fuzzFiles(state, f.TargetFileKeys, jobs, errors)
-
 		}
 
 		if f.EnableGeneratedPayloads {
@@ -110,13 +109,11 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, chan error) {
 			} else {
 				fuzzTextBodyWithDelimiters(state, []string{}, jobs, errors)
 			}
-
 		}
 
 		// Signal to consumer that we're done
 		close(jobs)
 		close(errors)
-
 	}(jobs, errors)
 
 	return jobs, errors
