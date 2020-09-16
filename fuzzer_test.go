@@ -183,7 +183,7 @@ func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sanityCount := 65
+	sanityCount := 79
 	if expectedCount != sanityCount {
 		t.Fatalf("Wrong count, expected %d, got %d", sanityCount, expectedCount)
 	}
