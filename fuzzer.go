@@ -34,11 +34,11 @@ type Fuzzer struct {
 // GenerateRequests begins generating HTTP requests based on the seed request and sends them into the returned channel.
 // It streams the wordlist from the filesystem line-by-line so it can handle wordlists in constant time.
 // The trade-off is that callers cannot know ahead of time how many requests will be sent.
-func (f *Fuzzer) GenerateRequests() (<-chan *Job, chan error) {
+func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 	jobs := make(chan *Job)
 	errors := make(chan error)
 
-	go func(jobs chan *Job, errors chan error) {
+	go func(jobs chan<- *Job, errors chan<- error) {
 
 		// Send the file upload stuff independent of the payloads in the wordlist
 		for _, filename := range f.FilesystemPayloads {

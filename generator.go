@@ -18,7 +18,7 @@ type fuzzerState struct {
 type requestGenerator func(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error)
 
 // fuzzFiles applies a file to every file key we're targeting in the seed request
-func fuzzFiles(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+func fuzzFiles(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
 	for _, fileKey := range targets {
 		req, err := state.Seed.CloneBody(context.Background())
 		if err != nil {
@@ -47,7 +47,7 @@ func fuzzFiles(state *fuzzerState, targets []string, jobs chan *Job, errors chan
 }
 
 // fuzzHeaders applies a payload word to every target header in the seed request
-func fuzzHeaders(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+func fuzzHeaders(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
 	for _, header := range targets {
 		req, err := state.Seed.CloneBody(context.Background())
 		if err != nil {
@@ -71,7 +71,7 @@ func fuzzHeaders(state *fuzzerState, targets []string, jobs chan *Job, errors ch
 	}
 }
 
-func fuzzURLPathArgs(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+func fuzzURLPathArgs(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
 	for _, arg := range targets {
 		req, err := state.Seed.CloneBody(context.Background())
 		if err != nil {
@@ -95,7 +95,7 @@ func fuzzURLPathArgs(state *fuzzerState, targets []string, jobs chan *Job, error
 	}
 }
 
-func fuzzDirectoryRoot(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+func fuzzDirectoryRoot(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
 	req, err := state.Seed.CloneBody(context.Background())
 	if err != nil {
 		errors <- err
@@ -117,7 +117,7 @@ func fuzzDirectoryRoot(state *fuzzerState, targets []string, jobs chan *Job, err
 	}
 }
 
-func fuzzURLParams(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+func fuzzURLParams(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
 	for _, param := range targets {
 		req, err := state.Seed.CloneBody(context.Background())
 		if err != nil {
@@ -140,7 +140,7 @@ func fuzzURLParams(state *fuzzerState, targets []string, jobs chan *Job, errors 
 		}
 	}
 }
-func fuzzMultipartFormField(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+func fuzzMultipartFormField(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
 	for _, fieldName := range targets {
 		req, err := state.Seed.CloneBody(context.Background())
 		if err != nil {
@@ -163,7 +163,7 @@ func fuzzMultipartFormField(state *fuzzerState, targets []string, jobs chan *Job
 	}
 }
 
-func fuzzTextBodyWithDelimiters(state *fuzzerState, targets []string, jobs chan *Job, errors chan error) {
+func fuzzTextBodyWithDelimiters(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
 	// Fuzz request body injection points
 	targetCount, err := state.Seed.BodyTargetCount(state.BodyTargetDelimiter)
 	if err != nil {
