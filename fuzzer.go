@@ -172,19 +172,19 @@ func (f *Fuzzer) RequestCount() (int, error) {
 	fileTargets := len(f.TargetFileKeys) * len(NativeSupportedFileTypes())
 	if fileTargets > 0 || multipartFieldTargets > 0 || len(f.TargetFilenames) > 0 {
 		if f.EnableGeneratedPayloads {
-			numRequests = numRequests + fileTargets
-			numRequests = numRequests + (count * len(NativeSupportedFileTypes()) * len(f.TargetFilenames))
+			numRequests += fileTargets
+			numRequests += (count * len(NativeSupportedFileTypes()) * len(f.TargetFilenames))
 		}
 	} else {
 		bodyTargetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)
 		if err != nil {
 			return 0, err
 		}
-		numRequests = numRequests + (count * bodyTargetCount)
+		numRequests += (count * bodyTargetCount)
 	}
 
 	if f.FuzzDirectory {
-		numRequests = numRequests + count
+		numRequests += count
 	}
 
 	return numRequests, nil
