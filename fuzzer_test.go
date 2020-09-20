@@ -258,3 +258,56 @@ func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFileWithoutGeneratedB
 		t.Fatalf("Too few requests are being sent, expected %d, got %d", expectedCount, count)
 	}
 }
+
+func TestFuzzerGeneratesCorrectRequestsRequestBodyMultipartFileAnndFilenames(t *testing.T) {
+	wordlist, err := os.Open("testdata/useragents.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, _ := RequestFromFile("./testdata/validuploadPOST.request")
+	client := &Client{&http.Client{}}
+	config := &Config{
+		TargetHeaders:             []string{"Host", "Pragma", "User-Agent"},
+		TargetParams:              []string{"fuzz"},
+		TargetFileKeys:            []string{"file"},
+		TargetMultipartFieldNames: []string{"field"},
+		TargetFilenames:           []string{"file", "second"},
+		FilesystemPayloads:        []string{"./testpayloads/payload.php"},
+		FuzzFileSize:              int64(1024),
+		FuzzDirectory:             true,
+		EnableGeneratedPayloads:   true,
+		Wordlist:                  wordlist,
+		Seed:                      request,
+		Client:                    client,
+		Logger:                    testLogger(t),
+		URLScheme:                 "http",
+	}
+	fuzzer := &Fuzzer{config}
+	expectedCount, err := fuzzer.RequestCount()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sanityCount := 569
+	if expectedCount != sanityCount {
+		t.Fatalf("Wrong count, expected %d, got %d", sanityCount, expectedCount)
+	}
+
+	requests, _ := fuzzer.GenerateRequests()
+	count := 0
+	for job := range requests {
+		if job.Request == nil {
+			t.Fatalf("Nil request received for %+v", *job)
+		}
+
+		count++
+		// Prevent it from running forever if too many requests come back.
+		if count-expectedCount > 100 {
+			t.Fatalf("Too many requests are being sent, expected %d, got %d", expectedCount, count)
+		}
+	}
+
+	if count != expectedCount {
+		t.Fatalf("Too few requests are being sent, expected %d, got %d", expectedCount, count)
+	}
+}

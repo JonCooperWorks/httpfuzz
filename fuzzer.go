@@ -105,6 +105,50 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 			} else {
 				fuzzTextBodyWithDelimiters(state, empty, jobs, errors)
 			}
+
+			if len(f.TargetFilenames) > 0 {
+				// Send the file upload stuff independent of the payloads in the wordlist
+				for _, filename := range f.FilesystemPayloads {
+					file, err := FileFrom(filename, "")
+					if err != nil {
+						errors <- err
+						return
+					}
+
+					req := f.Seed
+					file.Name = payload
+					state := &fuzzerState{
+						PayloadFile: file,
+						Seed:        req,
+					}
+
+					fuzzFiles(state, f.TargetFilenames, jobs, errors)
+				}
+
+				if f.EnableGeneratedPayloads {
+					for _, fileType := range NativeSupportedFileTypes() {
+						req, err := f.Seed.CloneBody(context.Background())
+						if err != nil {
+							errors <- err
+							return
+						}
+
+						file, err := GenerateFile(fileType, f.FuzzFileSize, "")
+						if err != nil {
+							errors <- err
+							return
+						}
+
+						file.Name = payload
+						state := &fuzzerState{
+							PayloadFile: file,
+							Seed:        req,
+						}
+
+						fuzzFiles(state, f.TargetFilenames, jobs, errors)
+					}
+				}
+			}
 		}
 
 		// Signal to consumer that we're done
@@ -149,13 +193,15 @@ func (f *Fuzzer) RequestCount() (int, error) {
 	numRequests := (count * len(f.TargetHeaders)) +
 		(count * len(f.TargetParams)) +
 		(count * len(f.TargetPathArgs)) +
-		multipartFieldTargets*count +
-		len(f.FilesystemPayloads)*len(f.TargetFileKeys)
+		(multipartFieldTargets * count) +
+		(len(f.FilesystemPayloads) * len(f.TargetFileKeys)) +
+		(count * len(f.TargetFilenames) * len(f.FilesystemPayloads))
 
 	fileTargets := len(f.TargetFileKeys) * len(NativeSupportedFileTypes())
 	if fileTargets > 0 || multipartFieldTargets > 0 {
 		if f.EnableGeneratedPayloads {
 			numRequests = numRequests + fileTargets
+			numRequests = numRequests + (count * len(NativeSupportedFileTypes()) * len(f.TargetFilenames))
 		}
 	} else {
 		bodyTargetCount, err := f.Seed.BodyTargetCount(f.TargetDelimiter)

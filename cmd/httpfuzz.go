@@ -132,6 +132,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 		EnableGeneratedPayloads:   generateFilePayloads,
 		TargetFileKeys:            multipartFileKeys,
 		TargetMultipartFieldNames: multipartFormFields,
+		TargetFilenames:           c.StringSlice("target-filename"),
 		FilesystemPayloads:        payloads,
 		TargetPathArgs:            targetPathArgs,
 		Wordlist:                  wordlist,
@@ -260,6 +261,10 @@ func main() {
 			&cli.BoolFlag{
 				Name:  "automatic-file-payloads",
 				Usage: "enable this flag to automatically generate files for fuzzing",
+			},
+			&cli.StringSliceFlag{
+				Name:  "target-filename",
+				Usage: "fuzz files but also fuzz the filename using the provided wordlist",
 			},
 		},
 	}
