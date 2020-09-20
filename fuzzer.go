@@ -100,6 +100,7 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 					continue
 				}
 
+				// Send fuzzed files with filenames from wordlist
 				for _, filename := range f.FilesystemPayloads {
 					file, err := FileFrom(filename, "")
 					if err != nil {
