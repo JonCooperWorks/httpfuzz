@@ -45,14 +45,9 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 				return
 			}
 
-			req, err := f.Seed.CloneBody(context.Background())
-			if err != nil {
-				errors <- err
-				return
-			}
 			state := &fuzzerState{
 				PayloadFile: file,
-				Seed:        req,
+				Seed:        f.Seed,
 			}
 
 			fuzzFiles(state, f.TargetFileKeys, jobs, errors)
@@ -60,12 +55,6 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 
 		if f.EnableGeneratedPayloads {
 			for _, fileType := range NativeSupportedFileTypes() {
-				req, err := f.Seed.CloneBody(context.Background())
-				if err != nil {
-					errors <- err
-					return
-				}
-
 				file, err := GenerateFile(fileType, f.FuzzFileSize, "")
 				if err != nil {
 					errors <- err
@@ -74,7 +63,7 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 
 				state := &fuzzerState{
 					PayloadFile: file,
-					Seed:        req,
+					Seed:        f.Seed,
 				}
 
 				fuzzFiles(state, f.TargetFileKeys, jobs, errors)
@@ -130,12 +119,6 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 
 				if f.EnableGeneratedPayloads {
 					for _, fileType := range NativeSupportedFileTypes() {
-						req, err := f.Seed.CloneBody(context.Background())
-						if err != nil {
-							errors <- err
-							return
-						}
-
 						file, err := GenerateFile(fileType, f.FuzzFileSize, "")
 						if err != nil {
 							errors <- err
@@ -145,7 +128,7 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 						file.Name = payload
 						state := &fuzzerState{
 							PayloadFile: file,
-							Seed:        req,
+							Seed:        f.Seed,
 						}
 
 						fuzzFiles(state, f.TargetFilenames, jobs, errors)
