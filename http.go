@@ -237,7 +237,7 @@ func (r *Request) ReplaceMultipartFileData(fieldName string, file *File) error {
 		part, err := mr.NextPart()
 		if err == io.EOF {
 			if !written {
-				partWriter, err := mw.CreatePart(part.Header)
+				partWriter, err := mw.CreateFormFile(fieldName, file.Name)
 				_, err = partWriter.Write(file.Payload)
 				if err != nil {
 					return err
@@ -261,7 +261,7 @@ func (r *Request) ReplaceMultipartFileData(fieldName string, file *File) error {
 
 		// Copy part headers from the old request
 		if params["name"] == fieldName {
-			partWriter, err := mw.CreatePart(part.Header)
+			partWriter, err := mw.CreateFormFile(fieldName, file.Name)
 			_, err = partWriter.Write(file.Payload)
 			if err != nil {
 				return err

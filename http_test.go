@@ -260,7 +260,7 @@ func TestReplaceMultipartFileData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedContentLength := int64(322)
+	expectedContentLength := int64(321)
 	if request.ContentLength != expectedContentLength {
 		debug, _ := httputil.DumpRequest(request.Request, true)
 		t.Errorf("Expected %d, got %d", expectedContentLength, request.ContentLength)
