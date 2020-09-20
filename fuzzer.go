@@ -96,10 +96,6 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 			if len(f.TargetFilenames) > 0 {
 				// If there aren't any filesystem payloads or generated payloads, just change the filename
 				if len(f.FilesystemPayloads) == 0 && !f.EnableGeneratedPayloads {
-					state := &fuzzerState{
-						PayloadWord: payload,
-						Seed:        f.Seed,
-					}
 					fuzzFileNames(state, f.TargetFilenames, jobs, errors)
 					continue
 				}
