@@ -19,14 +19,13 @@ type Wordlist struct {
 func (w *Wordlist) Stream() <-chan string {
 	payloads := make(chan string)
 
-	// Ensure we only one stream can run at a time per wordlist.
+	// Ensure only one stream can run at a time per wordlist.
 	w.mux.Lock()
 	go func(payloads chan<- string) {
 		defer w.mux.Unlock()
 		scanner := bufio.NewScanner(w.File)
 		for scanner.Scan() {
-			payload := scanner.Text()
-			payloads <- payload
+			payloads <- scanner.Text()
 		}
 		close(payloads)
 	}(payloads)
