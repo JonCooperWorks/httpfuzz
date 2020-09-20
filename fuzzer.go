@@ -45,7 +45,11 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 				return
 			}
 
-			req := f.Seed
+			req, err := f.Seed.CloneBody(context.Background())
+			if err != nil {
+				errors <- err
+				return
+			}
 			state := &fuzzerState{
 				PayloadFile: file,
 				Seed:        req,
@@ -109,7 +113,12 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 						return
 					}
 
-					req := f.Seed
+					req, err := f.Seed.CloneBody(context.Background())
+					if err != nil {
+						errors <- err
+						return
+					}
+
 					file.Name = payload
 					state := &fuzzerState{
 						PayloadFile: file,
