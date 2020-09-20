@@ -144,7 +144,7 @@ httpfuzz \
  --payload-dir ./testpayloads
 ```
 
-This command will fuzz a multipart form field called `field` and the file field `file` with randomly generated 4KB (4096 bytes) files and any payloads in the `./testpayloads` directory and the wordlist `testdata/useragents.txt`.
+This command will fuzz a multipart form field called `field` and the file field `file` with randomly generated 4KB (4096 bytes) files and any payloads in the `./testpayloads` directory and filenames from the wordlist `testdata/useragents.txt`.
 You can still fuzz the other injection points, but delimiter injection will not work, since binary files can contain any character they want.
 
 ### Building httpfuzz
