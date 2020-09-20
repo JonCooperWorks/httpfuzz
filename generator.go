@@ -31,6 +31,10 @@ func fuzzFiles(state *fuzzerState, targets []string, jobs chan<- *Job, errors ch
 		}
 
 		file := state.PayloadFile
+		if state.PayloadWord != "" {
+			file.Name = state.PayloadWord
+		}
+
 		err = req.ReplaceMultipartFileData(fileKey, file)
 		if err != nil {
 			errors <- err

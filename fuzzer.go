@@ -108,9 +108,9 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 						return
 					}
 
-					file.Name = payload
 					state := &fuzzerState{
 						PayloadFile: file,
+						PayloadWord: payload,
 						Seed:        req,
 					}
 
@@ -125,9 +125,9 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 							return
 						}
 
-						file.Name = payload
 						state := &fuzzerState{
 							PayloadFile: file,
+							PayloadWord: payload,
 							Seed:        f.Seed,
 						}
 
