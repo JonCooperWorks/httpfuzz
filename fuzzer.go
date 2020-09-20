@@ -94,15 +94,18 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 			}
 
 			if len(f.TargetFilenames) > 0 {
-				// Send the file upload stuff independent of the payloads in the wordlist
+				// If there aren't any filesystem payloads or generated payloads, just change the filename
+				if len(f.FilesystemPayloads) == 0 && !f.EnableGeneratedPayloads {
+					state := &fuzzerState{
+						PayloadWord: payload,
+						Seed:        f.Seed,
+					}
+					fuzzFileNames(state, f.TargetFilenames, jobs, errors)
+					continue
+				}
+
 				for _, filename := range f.FilesystemPayloads {
 					file, err := FileFrom(filename, "")
-					if err != nil {
-						errors <- err
-						return
-					}
-
-					req, err := f.Seed.CloneBody(context.Background())
 					if err != nil {
 						errors <- err
 						return
@@ -111,7 +114,7 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 					state := &fuzzerState{
 						PayloadFile: file,
 						PayloadWord: payload,
-						Seed:        req,
+						Seed:        f.Seed,
 					}
 
 					fuzzFiles(state, f.TargetFilenames, jobs, errors)
@@ -160,8 +163,14 @@ func (f *Fuzzer) RequestCount() (int, error) {
 		(count * len(f.TargetParams)) +
 		(count * len(f.TargetPathArgs)) +
 		(multipartFieldTargets * count) +
-		(len(f.FilesystemPayloads) * len(f.TargetFileKeys)) +
-		(count * len(f.TargetFilenames) * len(f.FilesystemPayloads))
+		(len(f.FilesystemPayloads) * len(f.TargetFileKeys))
+
+	// Prevent multiplying by 0 from messing up the count when there are only filename targets
+	if len(f.FilesystemPayloads) > 0 {
+		numRequests += (count * len(f.TargetFilenames) * len(f.FilesystemPayloads))
+	} else {
+		numRequests += (count * len(f.TargetFilenames))
+	}
 
 	fileTargets := len(f.TargetFileKeys) * len(NativeSupportedFileTypes())
 	if fileTargets > 0 || multipartFieldTargets > 0 || len(f.TargetFilenames) > 0 {

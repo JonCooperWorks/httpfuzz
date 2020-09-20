@@ -3,6 +3,7 @@ package httpfuzz
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 )
 
 // fuzzerState represents the work to be done by a requestFuzzer at any given time.
@@ -16,6 +17,53 @@ type fuzzerState struct {
 // requestGenerator is a function that takes the state of the fuzzer and sends requests down to the executor based on that, or errors if something went wrong.
 // RequestFuzzers should copy the seed request in state before operating on it.
 type requestGenerator func(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error)
+
+func fuzzFileNames(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
+	for _, fileKey := range targets {
+		req, err := state.Seed.CloneBody(context.Background())
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		clone, err := state.Seed.CloneBody(context.Background())
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		originalFile, _, err := clone.FormFile(fileKey)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		originalFileBytes, err := ioutil.ReadAll(originalFile)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		file := &File{
+			Name:    state.PayloadWord,
+			Payload: originalFileBytes,
+			Size:    int64(len(originalFileBytes)),
+		}
+
+		err = req.ReplaceMultipartFileData(fileKey, file)
+		if err != nil {
+			errors <- err
+			return
+		}
+
+		jobs <- &Job{
+			Request:   req,
+			FieldName: fileKey,
+			Location:  bodyLocation,
+			Payload:   file.Name,
+		}
+	}
+}
 
 // fuzzFiles applies a file to every file key we're targeting in the seed request
 func fuzzFiles(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
