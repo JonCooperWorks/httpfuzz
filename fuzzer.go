@@ -1,10 +1,7 @@
 package httpfuzz
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"io"
 	"time"
 )
 
@@ -81,10 +78,7 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 		}
 
 		// Generate requests based on the combinations of the headers and URL paths.
-		scanner := bufio.NewScanner(f.Wordlist)
-		for scanner.Scan() {
-			payload := scanner.Text()
-
+		for payload := range f.Wordlist.Stream() {
 			state := &fuzzerState{
 				PayloadWord:         payload,
 				Seed:                f.Seed,
@@ -163,29 +157,9 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 // This will be slower the larger the input file.
 // It is imperative that this count matches the number of requests created by GenerateRequest, otherwise httpfuzz will wait forever on requests that aren't coming or exit before all requests are processed.
 func (f *Fuzzer) RequestCount() (int, error) {
-	count := 1
-	const lineBreak = '\n'
-
-	buf := make([]byte, bufio.MaxScanTokenSize)
-
-	for {
-		bufferSize, err := f.Wordlist.Read(buf)
-		if err != nil && err != io.EOF {
-			return 0, err
-		}
-
-		var buffPosition int
-		for {
-			i := bytes.IndexByte(buf[buffPosition:], lineBreak)
-			if i == -1 || bufferSize == buffPosition {
-				break
-			}
-			buffPosition += i + 1
-			count++
-		}
-		if err == io.EOF {
-			break
-		}
+	count, err := f.Wordlist.Count()
+	if err != nil {
+		return 0, err
 	}
 
 	multipartFieldTargets := len(f.TargetMultipartFieldNames)
@@ -213,12 +187,6 @@ func (f *Fuzzer) RequestCount() (int, error) {
 
 	if f.FuzzDirectory {
 		numRequests = numRequests + count
-	}
-
-	// Move back to the head of the file
-	_, err := f.Wordlist.Seek(0, io.SeekStart)
-	if err != nil {
-		return numRequests, err
 	}
 
 	return numRequests, nil

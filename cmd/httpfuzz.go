@@ -135,7 +135,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 		TargetFilenames:           c.StringSlice("target-filename"),
 		FilesystemPayloads:        payloads,
 		TargetPathArgs:            targetPathArgs,
-		Wordlist:                  wordlist,
+		Wordlist:                  &httpfuzz.Wordlist{File: wordlist},
 		Client:                    client,
 		Seed:                      seedRequest,
 		TargetDelimiter:           delimiter,

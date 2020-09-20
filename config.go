@@ -2,7 +2,6 @@ package httpfuzz
 
 import (
 	"log"
-	"os"
 	"sync"
 	"time"
 )
@@ -19,7 +18,7 @@ type Config struct {
 	EnableGeneratedPayloads   bool
 	FuzzFileSize              int64
 	FuzzDirectory             bool
-	Wordlist                  *os.File
+	Wordlist                  *Wordlist
 	Seed                      *Request
 	Client                    *Client
 	RequestDelay              time.Duration
