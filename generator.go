@@ -15,7 +15,7 @@ type fuzzerState struct {
 }
 
 // requestGenerator is a function that takes the state of the fuzzer and sends requests down to the executor based on that, or errors if something went wrong.
-// RequestFuzzers should copy the seed request in state before operating on it.
+// RequestGenerators should copy the seed request in state before operating on it.
 type requestGenerator func(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error)
 
 func fuzzFileNames(state *fuzzerState, targets []string, jobs chan<- *Job, errors chan<- error) {
