@@ -34,3 +34,28 @@ func TestWordlistCountIsAccurate(t *testing.T) {
 		t.Fatalf("Expected %d words, got %d", count, wordsReceived)
 	}
 }
+
+func TestWordlistCountIsAccurateEmptyWordlist(t *testing.T) {
+	wordlist := &Wordlist{File: nil}
+	count, err := wordlist.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const expectedCount = 0
+	if count != expectedCount {
+		t.Fatalf("Expected %d, got %d", expectedCount, count)
+	}
+
+	wordsReceived := 0
+	for range wordlist.Stream() {
+		wordsReceived++
+		if wordsReceived > count {
+			t.Fatalf("Expected %d words, got %d", count, wordsReceived)
+		}
+	}
+
+	if wordsReceived < count {
+		t.Fatalf("Expected %d words, got %d", count, wordsReceived)
+	}
+}

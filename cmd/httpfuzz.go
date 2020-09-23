@@ -17,12 +17,6 @@ import (
 )
 
 func actionHTTPFuzz(c *cli.Context) error {
-	wordlist, err := os.Open(c.String("wordlist"))
-	if err != nil {
-		return err
-	}
-	defer wordlist.Close()
-
 	seedRequest, err := httpfuzz.RequestFromFile(c.String("seed-request"))
 	if err != nil {
 		return err
@@ -119,8 +113,21 @@ func actionHTTPFuzz(c *cli.Context) error {
 	}
 
 	generateFilePayloads := c.Bool("automatic-file-payloads")
-	if payloadDirectory == "" && !generateFilePayloads && len(multipartFormFields) > 0 {
+	if payloadDirectory == "" && !generateFilePayloads && len(multipartFileKeys) > 0 {
 		logger.Printf("Warning: no file payloads have been specified")
+	}
+
+	var wordlist *httpfuzz.Wordlist
+	if wordlistFileName := c.String("wordlist"); wordlistFileName != "" {
+		wordlistFile, err := os.Open(wordlistFileName)
+		if err != nil {
+			return err
+		}
+		defer wordlistFile.Close()
+
+		wordlist = &httpfuzz.Wordlist{File: wordlistFile}
+	} else {
+		wordlist = &httpfuzz.Wordlist{}
 	}
 
 	client := &httpfuzz.Client{Client: httpClient}
@@ -135,7 +142,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 		TargetFilenames:           c.StringSlice("target-filename"),
 		FilesystemPayloads:        payloads,
 		TargetPathArgs:            targetPathArgs,
-		Wordlist:                  &httpfuzz.Wordlist{File: wordlist},
+		Wordlist:                  wordlist,
 		Client:                    client,
 		Seed:                      seedRequest,
 		TargetDelimiter:           delimiter,
@@ -149,6 +156,10 @@ func actionHTTPFuzz(c *cli.Context) error {
 	requestCount, err := fuzzer.RequestCount()
 	if err != nil {
 		return err
+	}
+
+	if requestCount == 0 {
+		return fmt.Errorf("no requests to be sent")
 	}
 
 	logger.Printf("Sending %d requests", requestCount)
@@ -195,7 +206,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:     "wordlist",
-				Required: true,
+				Required: false,
 				Usage:    "newline separated wordlist for the fuzzer",
 			},
 			&cli.StringSliceFlag{

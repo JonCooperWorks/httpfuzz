@@ -70,7 +70,7 @@ func (f *Fuzzer) GenerateRequests() (<-chan *Job, <-chan error) {
 			}
 		}
 
-		// Generate requests based on the combinations of the headers and URL paths.
+		// Generate requests based on the wordlist.
 		for payload := range f.Wordlist.Stream() {
 			state := &fuzzerState{
 				PayloadWord:         payload,

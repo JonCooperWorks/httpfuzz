@@ -22,6 +22,12 @@ func (w *Wordlist) Stream() <-chan string {
 	// Ensure only one stream can run at a time per wordlist.
 	w.mux.Lock()
 	go func(payloads chan<- string) {
+		// If there is no wordlist, just close the chan.
+		if w.File == nil {
+			close(payloads)
+			return
+		}
+
 		defer w.mux.Unlock()
 		scanner := bufio.NewScanner(w.File)
 		for scanner.Scan() {
@@ -34,6 +40,11 @@ func (w *Wordlist) Stream() <-chan string {
 
 // Count returns the number of words in a wordlist.
 func (w *Wordlist) Count() (int, error) {
+	// If there's no wordlist, there are no files in it.
+	if w.File == nil {
+		return 0, nil
+	}
+
 	// We don't want to start a count in the middle of a stream.
 	w.mux.Lock()
 	defer w.mux.Unlock()
