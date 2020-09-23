@@ -117,7 +117,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 		logger.Printf("Warning: no file payloads have been specified")
 	}
 
-	var wordlist *httpfuzz.Wordlist
+	wordlist := &httpfuzz.Wordlist{}
 	if wordlistFileName := c.String("wordlist"); wordlistFileName != "" {
 		wordlistFile, err := os.Open(wordlistFileName)
 		if err != nil {
@@ -126,8 +126,6 @@ func actionHTTPFuzz(c *cli.Context) error {
 		defer wordlistFile.Close()
 
 		wordlist = &httpfuzz.Wordlist{File: wordlistFile}
-	} else {
-		wordlist = &httpfuzz.Wordlist{}
 	}
 
 	client := &httpfuzz.Client{Client: httpClient}
