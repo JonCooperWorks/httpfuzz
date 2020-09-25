@@ -78,7 +78,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 		urlScheme = "http"
 	}
 
-	plugins, err := httpfuzz.LoadPlugins(logger, c.StringSlice("plugin"), c.StringSlice("plugin-arg"))
+	plugins, err := httpfuzz.LoadPlugins(logger, c.StringSlice("plugin"))
 	if err != nil {
 		return err
 	}
@@ -274,6 +274,10 @@ func main() {
 			&cli.StringSliceFlag{
 				Name:  "target-filename",
 				Usage: "fuzz files but also fuzz the filename using the provided wordlist",
+			},
+			&cli.StringSliceFlag{
+				Name:  "plugin",
+				Usage: "plugin binary for processing requests and responses",
 			},
 		},
 	}

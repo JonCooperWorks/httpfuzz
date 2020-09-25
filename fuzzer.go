@@ -200,6 +200,11 @@ func (f *Fuzzer) ProcessRequests(jobs <-chan *Job) {
 	}
 
 	f.waitGroup.Wait()
+
+	// Close the plugin chans so they don't wait forever.
+	for _, plugin := range f.Plugins {
+		close(plugin.Input)
+	}
 }
 
 func (f *Fuzzer) requestWorker(job *Job) {
@@ -243,7 +248,9 @@ func (f *Fuzzer) requestWorker(job *Job) {
 			Location:  job.Location,
 			FieldName: job.FieldName,
 		}
-		go f.runPlugin(plugin, result)
+
+		plugin.Input <- result
+
 	}
 }
 
@@ -251,11 +258,4 @@ func (f *Fuzzer) requestWorker(job *Job) {
 // This keeps the fuzzer running until all requests have been completed.
 func (f *Fuzzer) WaitFor(requests int) {
 	f.waitGroup.Add(requests)
-}
-
-func (f *Fuzzer) runPlugin(plugin Plugin, result *Result) {
-	err := plugin.OnSuccess(result)
-	if err != nil {
-		f.Logger.Printf("Error running plugin %s: %v", plugin.Name(), err)
-	}
 }

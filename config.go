@@ -22,7 +22,7 @@ type Config struct {
 	Seed                      *Request
 	Client                    *Client
 	RequestDelay              time.Duration
-	Plugins                   []Plugin
+	Plugins                   []*Plugin
 	Logger                    *log.Logger
 	URLScheme                 string
 	TargetDelimiter           byte
