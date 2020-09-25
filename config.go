@@ -15,6 +15,7 @@ type Config struct {
 	TargetMultipartFieldNames []string
 	FilesystemPayloads        []string
 	TargetFilenames           []string
+	LogSuccess                bool
 	EnableGeneratedPayloads   bool
 	FuzzFileSize              int64
 	FuzzDirectory             bool

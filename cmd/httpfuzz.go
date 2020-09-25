@@ -135,6 +135,7 @@ func actionHTTPFuzz(c *cli.Context) error {
 		FuzzDirectory:             c.Bool("dirbuster"),
 		FuzzFileSize:              c.Int64("fuzz-file-size"),
 		EnableGeneratedPayloads:   generateFilePayloads,
+		LogSuccess:                c.Bool("log-output"),
 		TargetFileKeys:            multipartFileKeys,
 		TargetMultipartFieldNames: multipartFormFields,
 		TargetFilenames:           c.StringSlice("target-filename"),
@@ -278,6 +279,10 @@ func main() {
 			&cli.StringSliceFlag{
 				Name:  "plugin",
 				Usage: "plugin binary for processing requests and responses",
+			},
+			&cli.BoolFlag{
+				Name:  "log-output",
+				Usage: "enable to log results to stdout",
 			},
 		},
 	}
