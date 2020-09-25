@@ -225,8 +225,6 @@ func (f *Fuzzer) requestWorker(job *Job) {
 		return
 	}
 
-	f.Logger.Printf("Payload in %s field \"%s\": %s. Received: [%v]", job.Location, job.FieldName, job.Payload, response.StatusCode)
-
 	for _, plugin := range f.Plugins {
 		req, err := request.CloneBody(context.Background())
 		if err != nil {
