@@ -62,6 +62,7 @@ You can fuzz other parts of the request with CLI flags.
 ### Plugins
 `httpfuzz` supports [Go plugins](https://golang.org/pkg/plugin/) so you can use the full power of Go to analyse requests and responses.
 An `httpfuzz` plugin is a regular Go plugin with a function called `Plugin` that implements `httpfuzz.InitializerFunc`.
+You can use plugins to save request-response transactions to disk, log them to a database or perform multi-stage attacks.
 
 ```
 // InitializerFunc is a go function that should be exported by a function package.
