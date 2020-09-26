@@ -219,11 +219,16 @@ func (f *Fuzzer) requestWorker(job *Job) {
 		return
 	}
 
+	// Measure time it took to receive a response from the server.
+	// Useful for blind attacks with delays.
+	start := time.Now()
 	response, err := f.Client.Do(job.Request)
 	if err != nil {
 		f.Logger.Printf("Error sending request: %v", err)
 		return
 	}
+
+	timeElapsed := time.Since(start)
 
 	if f.LogSuccess {
 		f.Logger.Printf("Payload in %s field \"%s\": %s. Received: [%v]", job.Location, job.FieldName, job.Payload, response.StatusCode)
@@ -242,13 +247,13 @@ func (f *Fuzzer) requestWorker(job *Job) {
 			continue
 		}
 
-		// Run each plugin in its own goroutine
 		result := &Result{
-			Request:   req,
-			Response:  resp,
-			Payload:   job.Payload,
-			Location:  job.Location,
-			FieldName: job.FieldName,
+			Request:     req,
+			Response:    resp,
+			Payload:     job.Payload,
+			Location:    job.Location,
+			FieldName:   job.FieldName,
+			TimeElapsed: timeElapsed,
 		}
 
 		plugin.Input <- result

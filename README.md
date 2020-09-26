@@ -88,11 +88,12 @@ These contain the `httpfuzz.Request`, the payload and the `httpfuzz.Response`, a
 ```
 // Result is the request, response and associated metadata to be processed by plugins.
 type Result struct {
-	Request   *Request
-	Response  *Response
-	Payload   string
-	Location  string
-	FieldName string
+	Request     *Request
+	Response    *Response
+	Payload     string
+	Location    string
+	FieldName   string
+	TimeElapsed time.Duration
 }
 ```
 

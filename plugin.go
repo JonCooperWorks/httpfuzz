@@ -3,6 +3,7 @@ package httpfuzz
 import (
 	"log"
 	"plugin"
+	"time"
 )
 
 // Listener must be implemented by a plugin to users to hook the request - response transaction.
@@ -25,11 +26,12 @@ type InitializerFunc func(*log.Logger) (Listener, error)
 
 // Result is the request, response and associated metadata to be processed by plugins.
 type Result struct {
-	Request   *Request
-	Response  *Response
-	Payload   string
-	Location  string
-	FieldName string
+	Request     *Request
+	Response    *Response
+	Payload     string
+	Location    string
+	FieldName   string
+	TimeElapsed time.Duration
 }
 
 // LoadPlugins loads Plugins from binaries on the filesytem.
