@@ -20,7 +20,7 @@ type Plugin struct {
 
 // InitializerFunc is a go function that should be exported by a function package.
 // It should be named "Plugin".
-// Your InitializerFunc should return an instance of your Listener with a reference to httpfuzz's logger for consistent logging.s
+// Your InitializerFunc should return an instance of your Listener with a reference to httpfuzz's logger for consistent logging.
 type InitializerFunc func(*log.Logger) (Listener, error)
 
 // Result is the request, response and associated metadata to be processed by plugins.

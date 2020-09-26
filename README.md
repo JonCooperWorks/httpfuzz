@@ -49,6 +49,8 @@ GLOBAL OPTIONS:
    --payload-dir value          directory with payload files to attempt to upload using the fuzzer
    --automatic-file-payloads    enable this flag to automatically generate files for fuzzing (default: false)
    --target-filename value      fuzz files but also fuzz the filename using the provided wordlist
+   --plugin value               plugin binary for processing requests and responses
+   --log-output                 enable to log results to stdout (default: false)
    --help, -h                   show help (default: false)
 ```
 
@@ -56,6 +58,41 @@ Seed requests are a text HTTP request.
 You can tag injection points in request bodies by surrounding them with the delimiter character specified at program startup with the `--target-delimiter` flag.
 By default, it's `` ` ``.
 You can fuzz other parts of the request with CLI flags.
+
+### Plugins
+`httpfuzz` supports [Go plugins](https://golang.org/pkg/plugin/) so you can use the full power of Go to analyse requests and responses.
+An `httpfuzz` plugin is a regular Go plugin with a function called `Plugin` that implements `httpfuzz.InitializerFunc`.
+
+```
+// InitializerFunc is a go function that should be exported by a function package.
+// It should be named "Plugin".
+// Your InitializerFunc should return an instance of your Listener with a reference to httpfuzz's logger for consistent logging.
+type InitializerFunc func(*log.Logger) (Listener, error)
+```
+
+The `httpfuzz.Listener` interface has two methods: `Listen` and `Name`.
+
+```
+// Listener must be implemented by a plugin to users to hook the request - response transaction.
+// The Listen method will be run in its own goroutine, so plugins cannot block the rest of the program, however panics can take down the entire process.
+type Listener interface {
+	Listen(results <-chan *Result)
+}
+```
+
+`Listen` implementations will receive a stream of  `httpfuzz.Result`s.
+These contain the `httpfuzz.Request`, the payload and the `httpfuzz.Response`, along with some other metadata.
+
+```
+// Result is the request, response and associated metadata to be processed by plugins.
+type Result struct {
+	Request   *Request
+	Response  *Response
+	Payload   string
+	Location  string
+	FieldName string
+}
+```
 
 ### Examples
 
