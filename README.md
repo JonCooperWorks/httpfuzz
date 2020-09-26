@@ -80,7 +80,7 @@ type Listener interface {
 }
 ```
 
-`Listen` implementations will receive a stream of  `httpfuzz.Result`s.
+`Listen` implementations will receive a stream of  `httpfuzz.Result`.
 These contain the `httpfuzz.Request`, the payload and the `httpfuzz.Response`, along with some other metadata.
 
 ```
