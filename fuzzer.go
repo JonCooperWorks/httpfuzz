@@ -202,9 +202,7 @@ func (f *Fuzzer) ProcessRequests(jobs <-chan *Job) {
 	f.waitGroup.Wait()
 
 	// Close the plugin chans so they don't wait forever.
-	for _, plugin := range f.Plugins {
-		close(plugin.Input)
-	}
+	f.Plugins.Close()
 }
 
 func (f *Fuzzer) requestWorker(job *Job) {
@@ -234,31 +232,29 @@ func (f *Fuzzer) requestWorker(job *Job) {
 		f.Logger.Printf("Payload in %s field \"%s\": %s. Received: [%v]", job.Location, job.FieldName, job.Payload, response.StatusCode)
 	}
 
-	for _, plugin := range f.Plugins {
-		req, err := request.CloneBody(context.Background())
-		if err != nil {
-			f.Logger.Printf("Error cloning request for plugin: %v", err)
-			continue
-		}
-
-		resp, err := response.CloneBody()
-		if err != nil {
-			f.Logger.Printf("Error cloning response for plugin: %v", err)
-			continue
-		}
-
-		result := &Result{
-			Request:     req,
-			Response:    resp,
-			Payload:     job.Payload,
-			Location:    job.Location,
-			FieldName:   job.FieldName,
-			TimeElapsed: timeElapsed,
-		}
-
-		plugin.Input <- result
-
+	req, err := request.CloneBody(context.Background())
+	if err != nil {
+		f.Logger.Printf("Error cloning request for plugin: %v", err)
+		return
 	}
+
+	resp, err := response.CloneBody()
+	if err != nil {
+		f.Logger.Printf("Error cloning response for plugin: %v", err)
+		return
+	}
+
+	result := &Result{
+		Request:     req,
+		Response:    resp,
+		Payload:     job.Payload,
+		Location:    job.Location,
+		FieldName:   job.FieldName,
+		TimeElapsed: timeElapsed,
+	}
+
+	f.Plugins.SendResult(result)
+
 }
 
 // WaitFor adds the requests the fuzzer will send to our internal sync.WaitGroup.

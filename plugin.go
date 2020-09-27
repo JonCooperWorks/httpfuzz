@@ -3,6 +3,7 @@ package httpfuzz
 import (
 	"log"
 	"plugin"
+	"sync"
 	"time"
 )
 
@@ -33,26 +34,47 @@ type Result struct {
 	TimeElapsed time.Duration
 }
 
+// PluginBroker handles sending messages to plugins.
+type PluginBroker struct {
+	Plugins   []*Plugin
+	waitGroup sync.WaitGroup
+}
+
+// SendResult sends a *Result to all loaded plugins for further processing.
+func (p *PluginBroker) SendResult(result *Result) {
+	for _, plugin := range p.Plugins {
+		plugin.Input <- result
+	}
+}
+
+// Close closes all plugin chans that are waiting on results.
+// Call close only after all results have been sent.
+func (p *PluginBroker) Close() {
+	for _, plugin := range p.Plugins {
+		close(plugin.Input)
+	}
+}
+
 // LoadPlugins loads Plugins from binaries on the filesytem.
-func LoadPlugins(logger *log.Logger, paths []string) ([]*Plugin, error) {
+func LoadPlugins(logger *log.Logger, paths []string) (*PluginBroker, error) {
 	plugins := []*Plugin{}
 
 	for _, path := range paths {
 		plg, err := plugin.Open(path)
 		if err != nil {
-			return plugins, err
+			return nil, err
 		}
 
 		symbol, err := plg.Lookup("New")
 		if err != nil {
-			return plugins, err
+			return nil, err
 		}
 
 		// Go needs this, InitializerFunc is purely for documentation.
 		initializer := symbol.(func(*log.Logger) (Listener, error))
 		httpfuzzListener, err := initializer(logger)
 		if err != nil {
-			return plugins, err
+			return nil, err
 		}
 
 		input := make(chan *Result)
@@ -67,5 +89,9 @@ func LoadPlugins(logger *log.Logger, paths []string) ([]*Plugin, error) {
 		plugins = append(plugins, httpfuzzPlugin)
 	}
 
-	return plugins, nil
+	pluginManager := &PluginBroker{
+		Plugins: plugins,
+	}
+	pluginManager.waitGroup.Add(len(plugins))
+	return pluginManager, nil
 }
