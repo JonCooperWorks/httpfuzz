@@ -22,13 +22,13 @@ func (w *Wordlist) Stream() <-chan string {
 	// Ensure only one stream can run at a time per wordlist.
 	w.mux.Lock()
 	go func(payloads chan<- string) {
+		defer w.mux.Unlock()
 		// If there is no wordlist, just close the chan.
 		if w.File == nil {
 			close(payloads)
 			return
 		}
 
-		defer w.mux.Unlock()
 		scanner := bufio.NewScanner(w.File)
 		for scanner.Scan() {
 			payloads <- scanner.Text()
