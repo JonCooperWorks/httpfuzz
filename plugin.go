@@ -13,8 +13,7 @@ type Listener interface {
 	Listen(results <-chan *Result)
 }
 
-// Plugin holds a listener and its input channel for us to send requests to.
-type Plugin struct {
+type pluginInfo struct {
 	Input chan<- *Result
 	Listener
 }
@@ -36,7 +35,7 @@ type Result struct {
 
 // PluginBroker handles sending messages to plugins.
 type PluginBroker struct {
-	plugins   []*Plugin
+	plugins   []*pluginInfo
 	waitGroup sync.WaitGroup
 }
 
@@ -47,7 +46,7 @@ func (p *PluginBroker) SendResult(result *Result) {
 	}
 }
 
-func (p *PluginBroker) run(plugin *Plugin, results <-chan *Result) {
+func (p *PluginBroker) run(plugin *pluginInfo, results <-chan *Result) {
 	go func() {
 		plugin.Listen(results)
 		p.waitGroup.Done()
@@ -59,7 +58,7 @@ func (p *PluginBroker) Wait() {
 	p.waitGroup.Wait()
 }
 
-func (p *PluginBroker) add(plugin *Plugin) {
+func (p *PluginBroker) add(plugin *pluginInfo) {
 	p.plugins = append(p.plugins, plugin)
 	p.waitGroup.Add(1)
 }
@@ -95,7 +94,7 @@ func LoadPlugins(logger *log.Logger, paths []string) (*PluginBroker, error) {
 		}
 
 		input := make(chan *Result)
-		httpfuzzPlugin := &Plugin{
+		httpfuzzPlugin := &pluginInfo{
 			Input:    input,
 			Listener: httpfuzzListener,
 		}
