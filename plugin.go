@@ -47,8 +47,7 @@ func (p *PluginBroker) SendResult(result *Result) {
 	}
 }
 
-// Run starts a plugin in a background goroutine
-func (p *PluginBroker) Run(plugin *Plugin, results <-chan *Result) {
+func (p *PluginBroker) run(plugin *Plugin, results <-chan *Result) {
 	go func() {
 		plugin.Listen(results)
 		p.waitGroup.Done()
@@ -103,7 +102,7 @@ func LoadPlugins(logger *log.Logger, paths []string) (*PluginBroker, error) {
 
 		// Listen for results in a goroutine for each plugin
 		broker.add(httpfuzzPlugin)
-		broker.Run(httpfuzzPlugin, input)
+		broker.run(httpfuzzPlugin, input)
 	}
 
 	return broker, nil
