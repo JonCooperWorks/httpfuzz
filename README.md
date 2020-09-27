@@ -72,7 +72,7 @@ If you need to configure your plugins, use environment variables prefixed with y
 type InitializerFunc func(*log.Logger) (Listener, error)
 ```
 
-The `httpfuzz.Listener` interface has two methods: `Listen` and `Name`.
+The `httpfuzz.Listener` interface has oen method: `Listen`.
 
 ```
 // Listener must be implemented by a plugin to users to hook the request - response transaction.
