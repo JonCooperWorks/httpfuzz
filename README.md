@@ -59,7 +59,7 @@ You can tag injection points in request bodies by surrounding them with the deli
 By default, it's `` ` ``.
 You can fuzz other parts of the request with CLI flags.
 
-### Plugins
+### Post-Request Plugins
 `httpfuzz` supports [Go plugins](https://golang.org/pkg/plugin/) so you can use the full power of Go to analyse requests and responses.
 An `httpfuzz` plugin is a regular Go plugin with a function called `New` that implements `httpfuzz.InitializerFunc`.
 You can use plugins to save request-response transactions to disk, log them to a database or perform multi-stage attacks.
@@ -96,6 +96,8 @@ type Result struct {
 	TimeElapsed time.Duration
 }
 ```
+
+After you've created a plugin, build it using `go build -buildmode=plugin yourplugin.go` and load it to `httpfuzz` with the `--post-request` flag.
 
 ### Examples
 
