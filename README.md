@@ -49,7 +49,7 @@ GLOBAL OPTIONS:
    --payload-dir value          directory with payload files to attempt to upload using the fuzzer
    --automatic-file-payloads    enable this flag to automatically generate files for fuzzing (default: false)
    --target-filename value      fuzz files but also fuzz the filename using the provided wordlist
-   --plugin value               plugin binary for processing requests and responses
+   --post-request value         plugin binary for processing requests and responses
    --log-output                 enable to log results to stdout (default: false)
    --help, -h                   show help (default: false)
 ```
