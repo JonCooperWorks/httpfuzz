@@ -36,28 +36,46 @@ type Result struct {
 
 // PluginBroker handles sending messages to plugins.
 type PluginBroker struct {
-	Plugins   []*Plugin
+	plugins   []*Plugin
 	waitGroup sync.WaitGroup
 }
 
 // SendResult sends a *Result to all loaded plugins for further processing.
 func (p *PluginBroker) SendResult(result *Result) {
-	for _, plugin := range p.Plugins {
+	for _, plugin := range p.plugins {
 		plugin.Input <- result
 	}
 }
 
-// Close closes all plugin chans that are waiting on results.
+// Run starts a plugin in a background goroutine
+func (p *PluginBroker) Run(plugin *Plugin, results <-chan *Result) {
+	go func() {
+		plugin.Listen(results)
+		p.waitGroup.Done()
+	}()
+}
+
+// Wait blocks the goroutine until all plugins have finished executing.
+func (p *PluginBroker) Wait() {
+	p.waitGroup.Wait()
+}
+
+func (p *PluginBroker) add(plugin *Plugin) {
+	p.plugins = append(p.plugins, plugin)
+	p.waitGroup.Add(1)
+}
+
+// SignalDone closes all plugin chans that are waiting on results.
 // Call close only after all results have been sent.
-func (p *PluginBroker) Close() {
-	for _, plugin := range p.Plugins {
+func (p *PluginBroker) SignalDone() {
+	for _, plugin := range p.plugins {
 		close(plugin.Input)
 	}
 }
 
 // LoadPlugins loads Plugins from binaries on the filesytem.
 func LoadPlugins(logger *log.Logger, paths []string) (*PluginBroker, error) {
-	plugins := []*Plugin{}
+	broker := &PluginBroker{}
 
 	for _, path := range paths {
 		plg, err := plugin.Open(path)
@@ -84,14 +102,9 @@ func LoadPlugins(logger *log.Logger, paths []string) (*PluginBroker, error) {
 		}
 
 		// Listen for results in a goroutine for each plugin
-		go httpfuzzPlugin.Listen(input)
-
-		plugins = append(plugins, httpfuzzPlugin)
+		broker.add(httpfuzzPlugin)
+		broker.Run(httpfuzzPlugin, input)
 	}
 
-	pluginManager := &PluginBroker{
-		Plugins: plugins,
-	}
-	pluginManager.waitGroup.Add(len(plugins))
-	return pluginManager, nil
+	return broker, nil
 }

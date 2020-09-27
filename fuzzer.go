@@ -202,7 +202,10 @@ func (f *Fuzzer) ProcessRequests(jobs <-chan *Job) {
 	f.waitGroup.Wait()
 
 	// Close the plugin chans so they don't wait forever.
-	f.Plugins.Close()
+	// It is vital that you close the input chans before waiting, otherwise this will deadlock.
+	f.Plugins.SignalDone()
+	f.Plugins.Wait()
+
 }
 
 func (f *Fuzzer) requestWorker(job *Job) {
