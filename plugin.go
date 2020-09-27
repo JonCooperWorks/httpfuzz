@@ -64,7 +64,7 @@ func (p *PluginBroker) add(plugin *pluginInfo) {
 }
 
 // SignalDone closes all plugin chans that are waiting on results.
-// Call close only after all results have been sent.
+// Call only after all results have been sent.
 func (p *PluginBroker) SignalDone() {
 	for _, plugin := range p.plugins {
 		close(plugin.Input)
