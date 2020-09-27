@@ -237,13 +237,13 @@ func (f *Fuzzer) requestWorker(job *Job) {
 	for _, plugin := range f.Plugins {
 		req, err := request.CloneBody(context.Background())
 		if err != nil {
-			f.Logger.Printf("Error cloning request for plugin %s: %v", plugin.Name(), err)
+			f.Logger.Printf("Error cloning request for plugin: %v", err)
 			continue
 		}
 
 		resp, err := response.CloneBody()
 		if err != nil {
-			f.Logger.Printf("Error cloning response for plugin %s: %v", plugin.Name(), err)
+			f.Logger.Printf("Error cloning response for plugin: %v", err)
 			continue
 		}
 

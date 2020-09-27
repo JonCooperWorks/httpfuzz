@@ -10,7 +10,6 @@ import (
 // The Listen method will be run in its own goroutine, so plugins cannot block the rest of the program, however panics can take down the entire process.
 type Listener interface {
 	Listen(results <-chan *Result)
-	Name() string
 }
 
 // Plugin holds a listener and its input channel for us to send requests to.
