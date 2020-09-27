@@ -187,11 +187,7 @@ func (r *Request) SetBodyPayloadAt(position int, delimiter byte, payload string)
 
 	// Calculate the offsets in the body that correspond to the position
 	index := &DelimiterArray{Contents: body}
-	delimiterPositions := index.Lookup(byte(delimiter))
-	if len(delimiterPositions)%2 != 0 {
-		return fmt.Errorf("unbalanced delimiters")
-	}
-	start, end, err := delimiterIndex(position, delimiterPositions)
+	start, end, err := index.Get(position, delimiter)
 	if err != nil {
 		return err
 	}
@@ -365,16 +361,6 @@ func (r *Request) ReplaceMultipartField(fieldName, payload string) error {
 	r.Header.Set("Content-Type", mw.FormDataContentType())
 	r.Body = ioutil.NopCloser(newBody)
 	return nil
-}
-
-func delimiterIndex(position int, delimiterPositions []int) (int, int, error) {
-	for i := 0; i < len(delimiterPositions); i++ {
-		if i/2-position <= 1 {
-			return delimiterPositions[i], delimiterPositions[i+1], nil
-		}
-	}
-
-	return 0, 0, fmt.Errorf("position out of range")
 }
 
 // Response is a *http.Response that allows cloning its body.
