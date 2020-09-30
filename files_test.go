@@ -59,3 +59,25 @@ func TestFileFromReturnsProperContents(t *testing.T) {
 		t.Fatalf("Expected %s, got %s", expectedFileName, file.Name)
 	}
 }
+
+func TestFileFromReturnsProperFilenameWithEmptyExtension(t *testing.T) {
+	file, err := FileFrom("./testpayloads/payload.php", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const expectedPayload = "<?php echo phpinfo(); ?>"
+	actualPayload := string(file.Payload)
+	if actualPayload != expectedPayload {
+		t.Fatalf("Expected %s, got %s", expectedPayload, actualPayload)
+	}
+
+	if file.Size != int64(len(actualPayload)) {
+		t.Fatalf("Mismatched file metadata size.")
+	}
+
+	const expectedFileName = "payload.php"
+	if file.Name != expectedFileName {
+		t.Fatalf("Expected %s, got %s", expectedFileName, file.Name)
+	}
+}

@@ -65,7 +65,11 @@ func FileFrom(path string, extraExtension string) (*File, error) {
 		return nil, err
 	}
 
-	filename := fmt.Sprintf("%s.%s", filepath.Base(path), extraExtension)
+	filename := filepath.Base(path)
+	if extraExtension != "" {
+		filename = fmt.Sprintf("%s.%s", filename, extraExtension)
+	}
+
 	return &File{
 		Name:     filename,
 		FileType: filepath.Ext(path),
