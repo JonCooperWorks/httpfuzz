@@ -1,6 +1,7 @@
 package httpfuzz
 
 import (
+	"context"
 	"log"
 	"plugin"
 	"sync"
@@ -40,10 +41,25 @@ type PluginBroker struct {
 }
 
 // SendResult sends a *Result to all loaded plugins for further processing.
-func (p *PluginBroker) SendResult(result *Result) {
+func (p *PluginBroker) SendResult(result *Result) error {
 	for _, plugin := range p.plugins {
+		// Give each plugin its own request.
+		req, err := result.Request.CloneBody(context.Background())
+		if err != nil {
+			return err
+		}
+
+		resp, err := result.Response.CloneBody()
+		if err != nil {
+			return err
+		}
+
+		result.Request = req
+		result.Response = resp
+
 		plugin.Input <- result
 	}
+	return nil
 }
 
 func (p *PluginBroker) run(plugin *pluginInfo, results <-chan *Result) {

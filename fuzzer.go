@@ -235,28 +235,19 @@ func (f *Fuzzer) requestWorker(job *Job) {
 		f.Logger.Printf("Payload in %s field \"%s\": %s. Received: [%v]", job.Location, job.FieldName, job.Payload, response.StatusCode)
 	}
 
-	req, err := request.CloneBody(context.Background())
-	if err != nil {
-		f.Logger.Printf("Error cloning request for plugin: %v", err)
-		return
-	}
-
-	resp, err := response.CloneBody()
-	if err != nil {
-		f.Logger.Printf("Error cloning response for plugin: %v", err)
-		return
-	}
-
 	result := &Result{
-		Request:     req,
-		Response:    resp,
+		Request:     request,
+		Response:    response,
 		Payload:     job.Payload,
 		Location:    job.Location,
 		FieldName:   job.FieldName,
 		TimeElapsed: timeElapsed,
 	}
 
-	f.Plugins.SendResult(result)
+	err = f.Plugins.SendResult(result)
+	if err != nil {
+		f.Logger.Printf("Error sending request to plugins: %v", err)
+	}
 
 }
 
