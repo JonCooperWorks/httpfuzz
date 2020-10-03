@@ -72,7 +72,7 @@ If you need to configure your plugins, use environment variables prefixed with y
 type InitializerFunc func(*log.Logger) (Listener, error)
 ```
 
-The `httpfuzz.Listener` interface has one method: `Listen`.
+The `httpfuzz.Listener` interface has oen method: `Listen`.
 
 ```
 // Listener must be implemented by a plugin to users to hook the request - response transaction.
@@ -97,7 +97,9 @@ type Result struct {
 }
 ```
 
-After you've created a plugin, build it using `go build -buildmode=plugin yourplugin.go` and load it to `httpfuzz` with the `--post-request` flag.
+After you've created a plugin, build it using `go build -buildmode=plugin yourplugin.go` and load it to `httpfuzz` with the `--post-request`
+
+You can see example plugins in [exampleplugins/](https://github.com/JonCooperWorks/httpfuzz/tree/master/exampleplugins)
 
 ### Examples
 
