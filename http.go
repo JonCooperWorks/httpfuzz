@@ -194,7 +194,7 @@ func (r *Request) SetBodyPayloadAt(position int, delimiter byte, payload string)
 
 	// Replace bytes between the start and end offset with payload bytes and the delimiters removed.
 	prefix := body[0:start]
-	suffix := body[end+1 : len(body)]
+	suffix := body[end+1:]
 	newBody := []byte{}
 	newBody = append(newBody, prefix...)
 	newBody = append(newBody, []byte(payload)...)

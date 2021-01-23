@@ -54,7 +54,7 @@ func RequestFromFile(filename string) (*Request, error) {
 		}
 	}
 
-	diskBodyBytes := diskRequestBytes[bodyOffset:len(diskRequestBytes)]
+	diskBodyBytes := diskRequestBytes[bodyOffset:]
 	req.Body = ioutil.NopCloser(bytes.NewReader(diskBodyBytes))
 	req.ContentLength = int64(len(diskBodyBytes))
 
