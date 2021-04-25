@@ -184,7 +184,7 @@ httpfuzz \
  --multipart-form-name field \
  --multipart-file-name file \
  --automatic-file-payloads \
- --target-filename file
+ --target-filename file \
  --payload-dir ./testpayloads
 ```
 
