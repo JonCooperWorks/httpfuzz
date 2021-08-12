@@ -51,7 +51,11 @@ func RequestFromFile(filename string) (*Request, error) {
 		bodyOffset = bytes.Index(diskRequestBytes, []byte("\r\n\r\n"))
 		if bodyOffset == -1 {
 			return nil, fmt.Errorf("invalid HTTP request provided")
+		} else {
+			bodyOffset += 4
 		}
+	} else {
+		bodyOffset += 2
 	}
 
 	diskBodyBytes := diskRequestBytes[bodyOffset:]
